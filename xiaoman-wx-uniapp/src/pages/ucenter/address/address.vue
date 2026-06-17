@@ -64,7 +64,7 @@ const getAddressList = async () => {
       url: api.AddressList,
       method: 'GET'
     })
-    addressList.value = data || []
+    addressList.value = (data && data.list) || []
   } catch (err) {
     console.error('Failed to get address list:', err)
   } finally {

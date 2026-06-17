@@ -227,7 +227,7 @@ const onCancelOrder = (id) => {
     content: '您确定要取消该手作订单吗？',
     confirmText: '取消订单',
     cancelText: '取消',
-    confirmColor: '#ef4444',
+    confirmColor: '#E07A5F',
     success: async (res) => {
       if (res.confirm) {
         try {
@@ -259,7 +259,7 @@ const onConfirmReceipt = (id, message) => {
     content: isPickup ? '您已拿到预订的手作美味了吗？确认后订单将完成。' : '您已收到心仪的手作商品了吗？确认后将打款给独立手艺人。',
     confirmText: isPickup ? '确认取餐' : '确认收货',
     cancelText: '取消',
-    confirmColor: '#10b981',
+    confirmColor: '#8B8E4B',
     success: async (res) => {
       if (res.confirm) {
         try {
@@ -319,7 +319,7 @@ onMounted(() => {
 }
 
 .tab-item.active {
-  color: #4f46e5;
+  color: #6F4E37;
 }
 
 .tab-item.active::after {
@@ -372,10 +372,10 @@ onMounted(() => {
   font-weight: 800;
 }
 
-.status-101 { color: #ef4444; } /* unpaid */
-.status-201 { color: #4f46e5; } /* paid/unshipped */
-.status-301 { color: #3b82f6; } /* shipped/unreceived */
-.status-401 { color: #10b981; } /* received/completed */
+.status-101 { color: #E07A5F; } /* unpaid */
+.status-201 { color: #6F4E37; } /* paid/unshipped */
+.status-301 { color: #D86B4F; } /* shipped/unreceived */
+.status-401 { color: #8B8E4B; } /* received/completed */
 
 .goods-list {
   display: flex;
@@ -455,7 +455,7 @@ onMounted(() => {
 
 .summary-price {
   font-size: 32rpx;
-  color: #ef4444;
+  color: #E07A5F;
   font-weight: 800;
 }
 

@@ -35,7 +35,7 @@
         </view>
         <view class="meta-row" v-if="detail.handleComment">
           <text class="meta-label">商家回执</text>
-          <text class="meta-val text-indigo">{{ detail.handleComment }}</text>
+          <text class="meta-val text-brand">{{ detail.handleComment }}</text>
         </view>
       </view>
 
@@ -199,8 +199,8 @@ onMounted(() => {
   font-weight: 600;
 }
 
-.text-indigo {
-  color: #4f46e5;
+.text-brand {
+  color: #6F4E37;
 }
 
 .footer-spacer {

@@ -7,32 +7,29 @@
 
     <!-- Branding Section -->
     <view class="brand-section">
-      <view class="logo-circle">
-        <text class="logo-text">LM</text>
-      </view>
-      <text class="brand-title">LITEMALL 官方旗舰店</text>
-      <text class="brand-subtitle">使用您的商城账号进行登录</text>
+      <!-- <view class="logo-circle"> -->
+        <!-- <text class="logo-text">XM</text> -->
+      <!-- </view> -->
+      <text class="brand-title">小满食光</text>
     </view>
 
     <!-- Form Section -->
     <view class="form-section">
-      <view class="input-card glass-panel">
+      <view class="input-card">
         <!-- Username Input -->
         <view class="input-group">
-          <text class="input-label">商城账号</text>
+          <!-- <text class="input-label">账号</text> -->
           <view class="input-wrapper">
-            <text class="input-icon">👤</text>
-            <input type="text" v-model="username" placeholder="请输入账号 (如 user123)" placeholder-style="color: #94a3b8;" />
+            <input type="text" v-model="username" placeholder="请输入用户名或手机号" placeholder-style="color: rgba(255, 255, 255, 0.45);" />
           </view>
         </view>
 
         <!-- Password Input -->
         <view class="input-group">
-          <text class="input-label">商城密码</text>
+          <!-- <text class="input-label">密码</text> -->
           <view class="input-wrapper">
-            <text class="input-icon">🔒</text>
-            <input :type="showPassword ? 'text' : 'password'" v-model="password" placeholder="请输入密码 (如 user123)" placeholder-style="color: #94a3b8;" />
-            <text class="pass-toggle" @tap="togglePassword">{{ showPassword ? '👁️' : '🙈' }}</text>
+            <input :type="showPassword ? 'text' : 'password'" v-model="password" placeholder="请输入密码" placeholder-style="color: rgba(255, 255, 255, 0.45);"/>
+            <text class="pass-toggle" @tap="togglePassword">{{ showPassword ? '隐藏' : '显示' }}</text>
           </view>
         </view>
       </view>
@@ -40,7 +37,7 @@
       <!-- Submit Button -->
       <button class="submit-btn" :disabled="loading" :class="{ 'btn-loading': loading }" @tap="handleLogin">
         <text v-if="!loading">立即登录</text>
-        <text v-else class="btn-spinner">⌛ 正在登录...</text>
+        <text v-else class="btn-spinner">正在登录...</text>
       </button>
 
       <!-- Helper Links -->
@@ -51,10 +48,10 @@
       </view>
 
       <!-- Helper info for local testing -->
-      <view class="login-tip">
+      <!-- <view class="login-tip">
         <text class="tip-title">本地开发测试账号：</text>
         <text class="tip-desc">账号：<text class="highlight">user123</text> | 密码：<text class="highlight">user123</text></text>
-      </view>
+      </view> -->
     </view>
   </view>
 </template>
@@ -127,9 +124,11 @@ const handleLogin = async () => {
         icon: 'success'
       })
 
-      // Return back to user profile page
+      // Redirect to homepage
       setTimeout(() => {
-        onBackTap()
+        uni.switchTab({
+          url: '/pages/index/index'
+        })
       }, 1000)
     }
   } catch (err) {
@@ -190,7 +189,7 @@ const handleLogin = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 10px 20px rgba(111, 78, 55, 0.3);
   margin-bottom: 32rpx;
 }
 
@@ -226,7 +225,7 @@ const handleLogin = async () => {
 .input-card {
   border-radius: var(--radius-md);
   padding: 40rpx 32rpx;
-  background: rgba(30, 41, 59, 0.4);
+  background: rgba(74, 53, 37, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -252,7 +251,7 @@ const handleLogin = async () => {
   align-items: center;
   height: 88rpx;
   border-radius: var(--radius-sm);
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(74, 53, 37, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.05);
   padding: 0 24rpx;
   box-sizing: border-box;
@@ -271,7 +270,9 @@ const handleLogin = async () => {
 }
 
 .pass-toggle {
-  font-size: 28rpx;
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #E07A5F;
   padding: 10rpx;
 }
 
@@ -287,7 +288,7 @@ const handleLogin = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
+  box-shadow: 0 10px 20px rgba(224, 122, 95, 0.3);
   transition: all 0.2s ease;
 }
 
@@ -322,7 +323,7 @@ const handleLogin = async () => {
 }
 
 .helper-link:active {
-  color: #3b82f6;
+  color: #E07A5F;
 }
 
 .helper-divider {
@@ -356,7 +357,7 @@ const handleLogin = async () => {
 }
 
 .highlight {
-  color: #3b82f6;
+  color: #E07A5F;
   font-weight: 700;
 }
 </style>

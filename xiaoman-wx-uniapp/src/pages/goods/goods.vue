@@ -334,7 +334,7 @@ onMounted(() => {
 .gallery-wrapper {
   width: 100%;
   height: 750rpx;
-  background-color: #f1f5f9;
+  background-color: #FAF6EE;
 }
 
 .gallery-swiper {
@@ -372,14 +372,14 @@ onMounted(() => {
 .price-symbol {
   font-size: 32rpx;
   font-weight: 700;
-  color: #ef4444;
+  color: #E07A5F;
   margin-right: 4rpx;
 }
 
 .price-retail {
   font-size: 52rpx;
   font-weight: 800;
-  color: #ef4444;
+  color: #E07A5F;
   margin-right: 16rpx;
   letter-spacing: -1rpx;
 }
@@ -408,7 +408,7 @@ onMounted(() => {
   font-weight: 700;
   color: #ffffff;
   background: var(--primary-gradient);
-  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 4px 8px rgba(224, 122, 95, 0.2);
 }
 
 .goods-name {
@@ -595,9 +595,9 @@ onMounted(() => {
   height: 84rpx;
   padding: 0 36rpx;
   border-radius: 42rpx;
-  background: rgba(59, 130, 246, 0.08);
-  border: 1px solid rgba(59, 130, 246, 0.15);
-  color: #3b82f6;
+  background: rgba(111, 78, 55, 0.08);
+  border: 1px solid rgba(111, 78, 55, 0.15);
+  color: #6F4E37;
   font-size: 26rpx;
   font-weight: 700;
   display: flex;
@@ -616,7 +616,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.25);
+  box-shadow: 0 6px 16px rgba(224, 122, 95, 0.25);
 }
 
 .btn-cart:active, .btn-buy:active {

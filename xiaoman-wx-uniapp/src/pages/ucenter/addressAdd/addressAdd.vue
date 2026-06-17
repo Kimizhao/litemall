@@ -41,7 +41,7 @@
           <text class="switch-label">设为默认地址</text>
           <text class="switch-desc">每次下单时将首选使用此收货地址</text>
         </view>
-        <switch :checked="address.isDefault" @change="onDefaultChange" color="#4f46e5" />
+        <switch :checked="address.isDefault" @change="onDefaultChange" color="#E07A5F" />
       </view>
 
       <view class="divider"></view>

@@ -413,9 +413,9 @@ onMounted(() => {
 }
 
 .hot-tag {
-  color: #4f46e5;
-  background-color: rgba(79, 70, 229, 0.04);
-  border-color: rgba(79, 70, 229, 0.1);
+  color: #E07A5F;
+  background-color: rgba(224, 122, 95, 0.04);
+  border-color: rgba(224, 122, 95, 0.1);
 }
 
 /* Results layout */
@@ -444,7 +444,7 @@ onMounted(() => {
 }
 
 .sort-tab.active {
-  color: #4f46e5;
+  color: #6F4E37;
 }
 
 .sort-tab.active::after {
@@ -474,7 +474,7 @@ onMounted(() => {
 }
 
 .arrow.highlight {
-  color: #4f46e5;
+  color: #E07A5F;
 }
 
 .results-scroll {

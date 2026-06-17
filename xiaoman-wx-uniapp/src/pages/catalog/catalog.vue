@@ -4,10 +4,10 @@
     <view class="shop-header">
       <view class="shop-header-bg"></view>
       <view class="shop-header-content">
-        <view class="shop-avatar">满</view>
+        <!-- <view class="shop-avatar">满</view> -->
         <view class="shop-info">
-          <text class="shop-name">小满食光手作</text>
-          <text class="shop-subtitle">三明治 · 手作简餐 · 现榨饮品</text>
+          <!-- <text class="shop-name">小满食光</text> -->
+          <text class="shop-subtitle">三明治 · 简餐 · 饮品</text>
         </view>
       </view>
     </view>
@@ -94,7 +94,7 @@
             <text class="cart-original-price" v-if="cartOriginalTotal > cartTotal.checkedGoodsAmount">¥{{ cartOriginalTotal.toFixed(1) }}</text>
           </view>
         </view>
-        <button class="btn-checkout" @tap="onCheckout">去结算</button>
+        <button class="btn-checkout" @tap="onCheckout">立即预订</button>
       </view>
     </view>
 
@@ -356,7 +356,7 @@ const clearCart = async () => {
   }
 }
 
-// 去结算跳转
+// 立即预订跳转
 const onCheckout = () => {
   if (!hasLogin.value) {
     uni.navigateTo({
@@ -382,10 +382,10 @@ const onCheckout = () => {
 /* 1. 店铺头部区域 */
 .shop-header {
   position: relative;
-  height: 240rpx;
+  height: 260rpx;
   display: flex;
   align-items: flex-end;
-  padding: 30rpx 40rpx;
+  padding: 40rpx;
   overflow: hidden;
 }
 
@@ -395,10 +395,10 @@ const onCheckout = () => {
   left: 0;
   width: 100%;
   height: 100%;
-  background-image: linear-gradient(to bottom, rgba(74, 53, 37, 0.2), rgba(74, 53, 37, 0.75)), 
+  background-image: linear-gradient(to bottom, rgba(74, 53, 37, 0.1), rgba(74, 53, 37, 0.8)), 
                     url('/static/xiaoman/shop_header.jpg');
   background-size: cover;
-  background-position: center;
+  background-position: center top;
   z-index: 1;
 }
 
@@ -406,35 +406,35 @@ const onCheckout = () => {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 20rpx;
+  gap: 24rpx;
   z-index: 2;
   color: #FFFFFF;
 }
 
 .shop-avatar {
-  width: 100rpx;
-  height: 100rpx;
+  width: 110rpx;
+  height: 110rpx;
   border-radius: 50%;
   background-color: #FFFFFF;
   color: #6F4E37;
-  font-size: 50rpx;
+  font-size: 56rpx;
   font-weight: bold;
   display: flex;
   align-items: center;
   justify-content: center;
   border: 4rpx solid #E6D5B8;
-  box-shadow: 0 4rpx 16rpx rgba(111, 78, 55, 0.2);
+  box-shadow: 0 6rpx 20rpx rgba(111, 78, 55, 0.25);
 }
 
 .shop-name {
-  font-size: 40rpx;
+  font-size: 42rpx;
   font-weight: 800;
   letter-spacing: 2rpx;
-  text-shadow: 0 2rpx 4rpx rgba(0,0,0,0.4);
+  text-shadow: 0 2rpx 6rpx rgba(0,0,0,0.5);
 }
 
 .shop-subtitle {
-  font-size: 24rpx;
+  font-size: 26rpx;
   opacity: 0.95;
   margin-top: 6rpx;
   text-shadow: 0 2rpx 4rpx rgba(0,0,0,0.4);
@@ -800,6 +800,8 @@ const onCheckout = () => {
   padding: 0 44rpx;
   border: none;
   box-shadow: 0 4rpx 12rpx rgba(224, 122, 95, 0.2);
+  margin: 0 !important;
+  width: auto !important;
 }
 
 .btn-checkout:active {
@@ -829,8 +831,9 @@ const onCheckout = () => {
   box-shadow: 0 -8rpx 32rpx rgba(74, 53, 37, 0.15);
   transform: translateY(100%);
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-  padding: 40rpx 40rpx 180rpx 40rpx;
+  padding: 40rpx 40rpx 300rpx 40rpx;
   border-top: 1rpx solid #E6D5B8;
+  box-sizing: border-box;
 }
 
 .cart-drawer.open {

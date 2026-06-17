@@ -4,10 +4,10 @@
     <view class="shop-header">
       <view class="shop-header-bg"></view>
       <view class="shop-header-content">
-        <view class="shop-avatar">满</view>
+        <!-- <view class="shop-avatar">满</view> -->
         <view class="shop-info">
-          <text class="shop-name">小满食光手作</text>
-          <text class="shop-subtitle">三明治 · 手作简餐 · 现榨饮品</text>
+          <!-- <text class="shop-name">小满食光</text> -->
+          <text class="shop-subtitle">三明治 · 简餐 · 饮品</text>
         </view>
       </view>
     </view>
@@ -24,17 +24,11 @@
     <view class="main-content">
       <!-- 3.1 预订点餐大按钮卡片 -->
       <view class="order-hero-card" @tap="onOrderTap">
+        <view class="order-hero-bg"></view>
         <view class="order-hero-overlay"></view>
         <view class="order-hero-content">
-          <view class="order-hero-left">
-            <text class="order-hero-title">预订点餐</text>
-            <text class="order-hero-desc">预约自取 / 外卖配送</text>
-            <view class="order-badge">提前下单不用等</view>
-          </view>
-          <view class="order-hero-right">
-            <text class="order-hero-icon">🥪</text>
-            <view class="order-arrow-btn">➔</view>
-          </view>
+          <text class="order-hero-title">预订点餐</text>
+          <view class="order-arrow-btn">➔</view>
         </view>
       </view>
 
@@ -42,19 +36,19 @@
       <view class="info-card">
         <view class="info-card-title">门店信息</view>
         
-        <view class="info-row">
+        <!-- <view class="info-row">
           <text class="info-icon">🕒</text>
           <view class="info-text-wrap">
             <text class="info-label">营业时间</text>
             <text class="info-value">每天 08:00 - 21:00</text>
           </view>
-        </view>
+        </view> -->
 
         <view class="info-row" @tap="onAddressTap">
           <text class="info-icon">📍</text>
           <div class="info-text-wrap">
-            <text class="info-label">门店地址</text>
-            <text class="info-value text-link">上海市浦东新区小满食光手作店</text>
+            <!-- <text class="info-label">导航地址</text> -->
+            <text class="info-value text-link">福州市仓山区公园路43号小满食光</text>
           </div>
           <text class="arrow-right">›</text>
         </view>
@@ -62,15 +56,32 @@
         <view class="info-row" @tap="onMakeCall">
           <text class="info-icon">📞</text>
           <div class="info-text-wrap">
-            <text class="info-label">联系电话</text>
+            <!-- <text class="info-label">联系电话</text> -->
             <text class="info-value text-link">138-0000-0000</text>
           </div>
           <view class="btn-call">呼叫</view>
         </view>
       </view>
 
-      <!-- 3.3 关于我们介绍 -->
-      <view class="about-card">
+      <!-- 3.3 添加微信二维码 -->
+      <view class="owner-card">
+        <view class="owner-card-title">添加微信</view>
+        <view class="owner-card-body">
+          <view class="owner-info">
+            <text class="owner-desc">扫码或长按保存二维码添加。</text>
+            <view class="owner-wechat-id">
+              <text class="wechat-label">微信号：</text>
+              <text class="wechat-value">ChenW***esto</text>
+            </view>
+          </view>
+          <view class="owner-qr-wrapper" @tap="onPreviewQR">
+            <image src="/static/xiaoman/contact_qr.png" :show-menu-by-longpress="true" mode="aspectFit" class="owner-qr-img" />
+          </view>
+        </view>
+      </view>
+
+      <!-- 3.4 关于我们介绍 -->
+      <!-- <view class="about-card">
         <view class="about-header">
           <text class="about-title">关于小满食光</text>
           <text class="about-icon">🌱</text>
@@ -93,7 +104,7 @@
             <text class="gallery-name">现榨饮品</text>
           </view>
         </view>
-      </view>
+      </view> -->
     </view>
   </view>
 </template>
@@ -115,11 +126,54 @@ const onMakeCall = () => {
   })
 }
 
-// 地址点击提示
+// 地址点击导航并复制
 const onAddressTap = () => {
-  uni.showToast({
-    title: '已复制地址，期待您的光临！',
-    icon: 'none'
+  uni.setClipboardData({
+    data: '福州市仓山区公园路43号小满食光',
+    showToast: false,
+    success: () => {
+      // Show copy success toast immediately
+      uni.showToast({
+        title: '地址已复制',
+        icon: 'none',
+        duration: 1500
+      });
+      
+      // Delay map opening by 1 second to allow toast visibility
+      // setTimeout(() => {
+      //   // #ifdef H5
+      //   window.location.href = 'https://apis.map.qq.com/uri/v1/marker?marker=coord:26.0438,119.3144;title:小满食光;addr:福州市仓山区公园路43号&referer=litemall';
+      //   // #endif
+        
+      //   // #ifndef H5
+      //   uni.openLocation({
+      //     latitude: 26.0438,
+      //     longitude: 119.3144,
+      //     name: '小满食光',
+      //     address: '福州市仓山区公园路43号',
+      //     scale: 18,
+      //     success: () => {
+      //       console.log('Location opened successfully');
+      //     },
+      //     fail: (err) => {
+      //       console.error('Failed to open location:', err);
+      //       uni.showToast({
+      //         title: '已复制地址，期待您的光临！',
+      //         icon: 'none'
+      //       });
+      //     }
+      //   });
+      //   // #endif
+      // }, 1000);
+    }
+  });
+}
+
+// 预览主理人微信二维码（支持长按识别）
+const onPreviewQR = () => {
+  uni.previewImage({
+    urls: ['/static/xiaoman/contact_qr.png'],
+    current: '/static/xiaoman/contact_qr.png'
   })
 }
 </script>
@@ -152,7 +206,7 @@ const onAddressTap = () => {
   background-image: linear-gradient(to bottom, rgba(74, 53, 37, 0.1), rgba(74, 53, 37, 0.8)), 
                     url('/static/xiaoman/shop_header.jpg');
   background-size: cover;
-  background-position: center;
+  background-position: center top;
   z-index: 1;
 }
 
@@ -235,18 +289,32 @@ const onAddressTap = () => {
 /* 3.1 预订点餐大按钮卡片 */
 .order-hero-card {
   position: relative;
-  background-color: #6F4E37;
+  height: 160rpx;
   color: #FFFFFF;
   border-radius: 36rpx;
-  padding: 48rpx;
   overflow: hidden;
-  box-shadow: 0 12rpx 36rpx rgba(111, 78, 55, 0.2);
+  box-shadow: 0 12rpx 36rpx rgba(111, 78, 55, 0.15);
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  padding: 0 48rpx;
 }
 
 .order-hero-card:active {
   transform: scale(0.98);
-  box-shadow: 0 6rpx 20rpx rgba(111, 78, 55, 0.15);
+  box-shadow: 0 6rpx 20rpx rgba(111, 78, 55, 0.1);
+}
+
+.order-hero-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('/static/xiaoman/sandwich_4.jpg');
+  background-size: cover;
+  background-position: center;
+  z-index: 1;
 }
 
 .order-hero-overlay {
@@ -255,8 +323,8 @@ const onAddressTap = () => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle at right bottom, rgba(224, 122, 95, 0.4), transparent 70%);
-  z-index: 1;
+  background: linear-gradient(to right, rgba(74, 53, 37, 0.8), rgba(74, 53, 37, 0.35));
+  z-index: 2;
 }
 
 .order-hero-content {
@@ -264,48 +332,15 @@ const onAddressTap = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  z-index: 2;
-}
-
-.order-hero-left {
-  display: flex;
-  flex-direction: column;
+  z-index: 3;
+  width: 100%;
 }
 
 .order-hero-title {
-  font-size: 52rpx;
+  font-size: 48rpx;
   font-weight: 900;
   letter-spacing: 2rpx;
-  text-shadow: 0 2rpx 4rpx rgba(0,0,0,0.15);
-}
-
-.order-hero-desc {
-  font-size: 28rpx;
-  opacity: 0.9;
-  margin-top: 10rpx;
-}
-
-.order-badge {
-  align-self: flex-start;
-  margin-top: 24rpx;
-  background-color: #E07A5F;
-  font-size: 22rpx;
-  font-weight: bold;
-  padding: 6rpx 18rpx;
-  border-radius: 100rpx;
-  box-shadow: 0 4rpx 12rpx rgba(224, 122, 95, 0.3);
-}
-
-.order-hero-right {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16rpx;
-}
-
-.order-hero-icon {
-  font-size: 80rpx;
-  filter: drop-shadow(0 4rpx 8rpx rgba(0,0,0,0.1));
+  text-shadow: 0 2rpx 8rpx rgba(0,0,0,0.3);
 }
 
 .order-arrow-btn {
@@ -319,7 +354,7 @@ const onAddressTap = () => {
   justify-content: center;
   font-weight: bold;
   font-size: 28rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.1);
+  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.15);
 }
 
 /* 3.2 门店信息模块 */
@@ -406,7 +441,83 @@ const onAddressTap = () => {
   transform: scale(0.95);
 }
 
-/* 3.3 关于我们介绍 */
+/* 3.3 主理人微信二维码 */
+.owner-card {
+  background-color: #FFFFFF;
+  border-radius: 32rpx;
+  padding: 36rpx;
+  box-shadow: 0 6rpx 20rpx rgba(111, 78, 55, 0.04);
+  border: 1rpx solid rgba(230, 213, 184, 0.2);
+}
+
+.owner-card-title {
+  font-size: 32rpx;
+  font-weight: 800;
+  color: #6F4E37;
+  margin-bottom: 24rpx;
+  padding-left: 12rpx;
+  border-left: 6rpx solid #6F4E37;
+}
+
+.owner-card-body {
+  display: flex;
+  align-items: center;
+  gap: 30rpx;
+}
+
+.owner-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.owner-desc {
+  font-size: 24rpx;
+  color: #A18276;
+  line-height: 1.5;
+  font-weight: 600;
+}
+
+.owner-wechat-id {
+  display: flex;
+  align-items: center;
+  font-size: 26rpx;
+  font-weight: bold;
+}
+
+.wechat-label {
+  color: #A18276;
+}
+
+.wechat-value {
+  color: #4A3525;
+  background-color: #FAF6EE;
+  padding: 4rpx 16rpx;
+  border-radius: 8rpx;
+  border: 1rpx dashed rgba(111, 78, 55, 0.3);
+}
+
+.owner-qr-wrapper {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+  border: 2rpx solid #FAF6EE;
+  box-shadow: 0 4rpx 12rpx rgba(111, 78, 55, 0.08);
+  flex-shrink: 0;
+  background-color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.owner-qr-img {
+  width: 150rpx;
+  height: 150rpx;
+}
+
+/* 3.4 关于我们介绍 */
 .about-card {
   background-color: #FFFFFF;
   border-radius: 32rpx;

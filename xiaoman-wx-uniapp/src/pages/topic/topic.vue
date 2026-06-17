@@ -180,12 +180,12 @@ onMounted(() => {
 .price-lead {
   font-size: 26rpx;
   font-weight: 800;
-  color: #ef4444;
+  color: #E07A5F;
 }
 
 .read-more {
   font-size: 24rpx;
-  color: #4f46e5;
+  color: #6F4E37;
   font-weight: 700;
 }
 

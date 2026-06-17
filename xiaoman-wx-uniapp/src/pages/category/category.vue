@@ -248,7 +248,7 @@ const onGoodsCardTap = (item) => {
 }
 
 .nav-item.active .nav-text {
-  color: #4f46e5;
+  color: #6F4E37;
   font-weight: 700;
 }
 
@@ -290,7 +290,7 @@ const onGoodsCardTap = (item) => {
 }
 
 .filter-item.active .filter-text {
-  color: #4f46e5;
+  color: #6F4E37;
 }
 
 .price-filter {
@@ -312,7 +312,7 @@ const onGoodsCardTap = (item) => {
 }
 
 .arrow.active {
-  color: #4f46e5;
+  color: #6F4E37;
 }
 
 /* Scroll area */

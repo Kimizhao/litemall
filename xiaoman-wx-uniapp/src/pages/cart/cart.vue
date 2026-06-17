@@ -229,7 +229,7 @@ const onDeleteRow = (item) => {
     content: '您确定要从购物车中删除该手作物吗？',
     confirmText: '删除',
     cancelText: '取消',
-    confirmColor: '#ef4444',
+    confirmColor: '#E07A5F',
     success: async (res) => {
       if (res.confirm) {
         try {
@@ -366,7 +366,7 @@ const onCheckout = () => {
   width: 42rpx;
   height: 42rpx;
   border-radius: 50%;
-  border: 4rpx solid #cbd5e1;
+  border: 4rpx solid #E6D5B8;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -391,7 +391,7 @@ const onCheckout = () => {
   width: 140rpx;
   height: 140rpx;
   border-radius: var(--radius-sm);
-  background: #f1f5f9;
+  background: #FAF6EE;
   margin-right: 20rpx;
 }
 
@@ -447,14 +447,14 @@ const onCheckout = () => {
 .price-symbol {
   font-size: 22rpx;
   font-weight: 700;
-  color: #ef4444;
+  color: #E07A5F;
   margin-right: 2rpx;
 }
 
 .price-val {
   font-size: 30rpx;
   font-weight: 700;
-  color: #ef4444;
+  color: #E07A5F;
 }
 
 /* Quantity Adjuster */
@@ -481,7 +481,7 @@ const onCheckout = () => {
 }
 
 .adjust-btn:active {
-  background-color: #e2e8f0;
+  background-color: #FAF6EE;
 }
 
 .qty-input {
@@ -607,14 +607,14 @@ const onCheckout = () => {
 .total-price-symbol {
   font-size: 24rpx;
   font-weight: 700;
-  color: #ef4444;
+  color: #E07A5F;
   margin-right: 2rpx;
 }
 
 .total-price-val {
   font-size: 38rpx;
   font-weight: 800;
-  color: #ef4444;
+  color: #E07A5F;
   letter-spacing: -0.5rpx;
 }
 

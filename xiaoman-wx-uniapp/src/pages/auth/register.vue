@@ -1,44 +1,36 @@
 <template>
   <view class="container">
-    <view class="register-card glass-panel">
+    <!-- Back Navigation Icon -->
+    <view class="nav-back" @tap="onBackTap">
+      <text class="back-icon">←</text>
+    </view>
+
+    <view class="register-card">
       <!-- Title -->
       <view class="header">
-        <text class="title">加入 Litemall</text>
-        <text class="subtitle">开启您的手艺生活之旅</text>
+        <text class="title">加入 小满食光</text>
+        <!-- <text class="subtitle">开启您的手作美食之旅</text> -->
       </view>
 
       <!-- Username -->
       <view class="input-wrap">
-        <text class="input-icon">👤</text>
-        <input type="text" class="form-input" v-model="username" placeholder="请输入用户名" />
+        <input type="text" class="form-input" v-model="username" placeholder="请输入用户名" placeholder-style="color: rgba(255, 255, 255, 0.45);" />
       </view>
 
       <!-- Mobile phone -->
       <view class="input-wrap">
-        <text class="input-icon">📱</text>
-        <input type="number" class="form-input" v-model="mobile" placeholder="请输入手机号码" maxlength="11" />
+        <input type="number" class="form-input" v-model="mobile" placeholder="请输入手机号码" maxlength="11" placeholder-style="color: rgba(255, 255, 255, 0.45);" />
       </view>
 
-      <!-- Captcha -->
-      <view class="captcha-row">
-        <view class="input-wrap captcha-input-wrap">
-          <text class="input-icon">🔑</text>
-          <input type="number" class="form-input" v-model="code" placeholder="短信验证码" maxlength="6" />
-        </view>
-        <button class="captcha-btn" @tap="onGetCaptcha" :disabled="countdown > 0">
-          {{ countdown > 0 ? countdown + 's' : '获取验证码' }}
-        </button>
-      </view>
+      <!-- SMS Captcha is bypassed and hidden for test environment -->
 
       <!-- Password -->
       <view class="input-wrap">
-        <text class="input-icon">🔒</text>
-        <input type="password" class="form-input" v-model="password" placeholder="请输入密码" />
+        <input type="password" class="form-input" v-model="password" placeholder="请输入密码" placeholder-style="color: rgba(255, 255, 255, 0.45);" />
       </view>
 
       <view class="input-wrap">
-        <text class="input-icon">🔒</text>
-        <input type="password" class="form-input" v-model="confirmPassword" placeholder="请再次确认密码" />
+        <input type="password" class="form-input" v-model="confirmPassword" placeholder="请再次确认密码" placeholder-style="color: rgba(255, 255, 255, 0.45);" />
       </view>
 
       <!-- Register Submit -->
@@ -58,40 +50,11 @@ import api from '../../config/api'
 
 const username = ref('')
 const mobile = ref('')
-const code = ref('')
+const code = ref('123456')
 const password = ref('')
 const confirmPassword = ref('')
 
-const countdown = ref(0)
 const submitting = ref(false)
-
-const onGetCaptcha = async () => {
-  if (!mobile.value.trim() || mobile.value.length < 11) {
-    uni.showToast({ title: '请输入正确的手机号码', icon: 'none' })
-    return
-  }
-
-  try {
-    await request({
-      url: api.AuthRegisterCaptcha,
-      method: 'POST',
-      data: { mobile: mobile.value }
-    })
-    uni.showToast({ title: '验证码已发送', icon: 'success' })
-    
-    // Countdown timer
-    countdown.value = 60
-    const timer = setInterval(() => {
-      if (countdown.value > 0) {
-        countdown.value -= 1
-      } else {
-        clearInterval(timer)
-      }
-    }, 1000)
-  } catch (err) {
-    console.error('Failed to get captcha:', err)
-  }
-}
 
 const onRegister = async () => {
   if (!username.value.trim()) {
@@ -102,10 +65,7 @@ const onRegister = async () => {
     uni.showToast({ title: '请输入正确的手机号码', icon: 'none' })
     return
   }
-  if (!code.value.trim()) {
-    uni.showToast({ title: '请输入短信验证码', icon: 'none' })
-    return
-  }
+  // Captcha is hidden and pre-filled with mock code '123456'
   if (!password.value.trim() || password.value.length < 6) {
     uni.showToast({ title: '密码长度不能少于6位', icon: 'none' })
     return
@@ -153,6 +113,16 @@ const onGoLogin = () => {
     url: '/pages/auth/login'
   })
 }
+
+const onBackTap = () => {
+  uni.navigateBack({
+    fail: () => {
+      uni.switchTab({
+        url: '/pages/index/index'
+      })
+    }
+  })
+}
 </script>
 
 <style scoped>
@@ -164,13 +134,41 @@ const onGoLogin = () => {
   justify-content: center;
   padding: 40rpx;
   box-sizing: border-box;
+  position: relative;
+}
+
+/* Custom back button */
+.nav-back {
+  position: absolute;
+  top: 80rpx;
+  left: 48rpx;
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  transition: background 0.2s ease;
+}
+
+.nav-back:active {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.back-icon {
+  font-size: 36rpx;
+  color: #ffffff;
+  font-weight: bold;
 }
 
 .register-card {
   width: 100%;
   padding: 64rpx 48rpx;
   border-radius: var(--radius-lg);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(74, 53, 37, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   box-shadow: var(--shadow-lg);
   display: flex;
   flex-direction: column;
@@ -199,8 +197,8 @@ const onGoLogin = () => {
 .input-wrap {
   height: 96rpx;
   border-radius: var(--radius-sm);
-  background-color: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(74, 53, 37, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   display: flex;
   align-items: center;
   padding: 0 28rpx;
@@ -241,7 +239,7 @@ const onGoLogin = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12rpx rgba(79, 70, 229, 0.2);
+  box-shadow: 0 4px 12rpx rgba(224, 122, 95, 0.2);
 }
 
 .captcha-btn:active {
@@ -260,7 +258,7 @@ const onGoLogin = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 24px rgba(79, 70, 229, 0.3);
+  box-shadow: 0 8px 24px rgba(224, 122, 95, 0.3);
   margin-top: 32rpx;
 }
 

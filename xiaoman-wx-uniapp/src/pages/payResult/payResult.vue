@@ -3,7 +3,7 @@
     <!-- 1. 成功提交的到店自取凭证小票 -->
     <view class="receipt-card glass-panel" v-if="pickupInfo">
       <view class="receipt-header">
-        <text class="receipt-shop-name">小满食光手作</text>
+        <text class="receipt-shop-name">小满食光</text>
         <text class="receipt-type-tag">到店自取凭证</text>
       </view>
 
@@ -112,7 +112,7 @@ const isOrderPaid = ref(false)
 const getOrderDetail = async () => {
   try {
     const data = await request({
-      url: `${api.OrderDetail}?id=${orderId.value}`,
+      url: `${api.OrderDetail}?orderId=${orderId.value}`,
       method: 'GET'
     })
     if (data) {

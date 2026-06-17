@@ -131,7 +131,7 @@ const onSubmitFeedback = async () => {
   font-size: 26rpx;
   font-weight: 800;
   color: var(--text-main);
-  border-left: 6rpx solid #4f46e5;
+  border-left: 6rpx solid #6F4E37;
   padding-left: 12rpx;
 }
 

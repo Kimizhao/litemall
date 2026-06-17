@@ -3,7 +3,7 @@
     {
       "path": "pages/index/index",
       "style": {
-        "navigationBarTitleText": "Litemall 官方商城",
+        "navigationBarTitleText": "小满食光",
         "navigationBarBackgroundColor": "#ffffff",
         "navigationBarTextStyle": "black",
         "enablePullDownRefresh": true
@@ -30,7 +30,7 @@
       "path": "pages/auth/login",
       "style": {
         "navigationBarTitleText": "会员登录",
-        "navigationBarBackgroundColor": "#1e293b",
+        "navigationBarBackgroundColor": "#4A3525",
         "navigationBarTextStyle": "white",
         "navigationStyle": "custom"
       }
@@ -119,7 +119,7 @@
     {
       "path": "pages/checkout/checkout",
       "style": {
-        "navigationBarTitleText": "确认订单",
+        "navigationBarTitleText": "立即预订",
         "navigationBarBackgroundColor": "#ffffff",
         "navigationBarTextStyle": "black"
       }
@@ -176,16 +176,18 @@
       "path": "pages/auth/register",
       "style": {
         "navigationBarTitleText": "会员注册",
-        "navigationBarBackgroundColor": "#ffffff",
-        "navigationBarTextStyle": "black"
+        "navigationBarBackgroundColor": "#4A3525",
+        "navigationBarTextStyle": "white",
+        "navigationStyle": "custom"
       }
     },
     {
       "path": "pages/auth/reset",
       "style": {
         "navigationBarTitleText": "密码重置",
-        "navigationBarBackgroundColor": "#ffffff",
-        "navigationBarTextStyle": "black"
+        "navigationBarBackgroundColor": "#4A3525",
+        "navigationBarTextStyle": "white",
+        "navigationStyle": "custom"
       }
     },
     {
@@ -287,13 +289,13 @@
   ],
   "globalStyle": {
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "Litemall 商城",
-    "navigationBarBackgroundColor": "#F8FAFC",
-    "backgroundColor": "#F8FAFC"
+    "navigationBarTitleText": "小满食光",
+    "navigationBarBackgroundColor": "#FAF6EE",
+    "backgroundColor": "#FAF6EE"
   },
   "tabBar": {
-    "color": "#94a3b8",
-    "selectedColor": "#4f46e5",
+    "color": "#A18276",
+    "selectedColor": "#6F4E37",
     "borderStyle": "white",
     "backgroundColor": "#ffffff",
     "list": [

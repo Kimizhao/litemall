@@ -13,7 +13,7 @@
         
         <view class="user-meta" @tap="onProfileTap">
           <text class="username">{{ hasLogin ? userInfo.nickname : '点击登录账号' }}</text>
-          <text class="user-id" v-if="hasLogin">Litemall 尊享会员</text>
+          <text class="user-id" v-if="hasLogin">小满食光尊享会员</text>
           <text class="user-id" v-else>享受更便捷的本地购物体验</text>
         </view>
         
@@ -27,12 +27,11 @@
       <view class="menu-box glass-panel">
         <view class="box-header">
           <text class="box-title">我的订单</text>
-          <text class="box-subtitle">查看全部</text>
+          <text class="box-subtitle" @tap="onViewAllOrders">查看全部</text>
         </view>
         
         <view class="order-grid">
           <view class="order-item" v-for="(item, index) in orderStates" :key="index" @tap="onOrderStateTap(item)">
-            <view class="order-icon">{{ item.icon }}</view>
             <text class="order-label">{{ item.label }}</text>
           </view>
         </view>
@@ -42,7 +41,6 @@
       <view class="menu-box glass-panel services-list">
         <view class="service-row" v-for="(item, index) in services" :key="index" @tap="onServiceTap(item)">
           <view class="service-left">
-            <text class="service-icon">{{ item.icon }}</text>
             <text class="service-label">{{ item.label }}</text>
           </view>
           <text class="service-arrow">›</text>
@@ -51,7 +49,6 @@
         <!-- Log Out Row -->
         <view class="service-row logout-row" v-if="hasLogin" @tap="onLogout">
           <view class="service-left">
-            <text class="service-icon logout-icon">🚪</text>
             <text class="service-label logout-text">退出账户登录</text>
           </view>
         </view>
@@ -78,10 +75,10 @@ const orderStates = ref([
 ])
 
 const services = ref([
-  { label: '我的收藏', icon: '❤️', route: '' },
-  { label: '我的足迹', icon: '👣', route: '' },
-  { label: '收货地址', icon: '📍', route: '' },
-  { label: '帮助与反馈', icon: '💬', route: '' }
+  { label: '我的收藏', icon: '❤️', route: '/pages/ucenter/collect/collect' },
+  { label: '我的足迹', icon: '👣', route: '/pages/ucenter/footprint/footprint' },
+  { label: '收货地址', icon: '📍', route: '/pages/ucenter/address/address' },
+  { label: '帮助与反馈', icon: '💬', route: '/pages/ucenter/feedback/feedback' }
 ])
 
 // Auto reload login state upon view enter
@@ -111,7 +108,7 @@ const onLogout = () => {
     content: '您确定要退出当前登录的账号吗？',
     confirmText: '确定',
     cancelText: '取消',
-    confirmColor: '#4f46e5',
+    confirmColor: '#6F4E37',
     success: async (res) => {
       if (res.confirm) {
         try {
@@ -138,18 +135,60 @@ const onLogout = () => {
   })
 }
 
+const onViewAllOrders = () => {
+  if (!hasLogin.value) {
+    uni.showToast({
+      title: '请先登录账号',
+      icon: 'none'
+    })
+    setTimeout(() => {
+      uni.navigateTo({
+        url: '/pages/auth/login'
+      })
+    }, 1000)
+    return
+  }
+  uni.navigateTo({
+    url: '/pages/ucenter/order/order?tab=0'
+  })
+}
+
 const onOrderStateTap = (item) => {
-  uni.showToast({
-    title: `查看订单：${item.label}`,
-    icon: 'none'
+  if (!hasLogin.value) {
+    uni.showToast({
+      title: '请先登录账号',
+      icon: 'none'
+    })
+    setTimeout(() => {
+      uni.navigateTo({
+        url: '/pages/auth/login'
+      })
+    }, 1000)
+    return
+  }
+  uni.navigateTo({
+    url: `/pages/ucenter/order/order?tab=${item.status}`
   })
 }
 
 const onServiceTap = (item) => {
-  uni.showToast({
-    title: `进入服务：${item.label}`,
-    icon: 'none'
-  })
+  if (!hasLogin.value) {
+    uni.showToast({
+      title: '请先登录账号',
+      icon: 'none'
+    })
+    setTimeout(() => {
+      uni.navigateTo({
+        url: '/pages/auth/login'
+      })
+    }, 1000)
+    return
+  }
+  if (item.route) {
+    uni.navigateTo({
+      url: item.route
+    })
+  }
 }
 </script>
 
@@ -207,7 +246,7 @@ const onServiceTap = (item) => {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  background-color: #334155;
+  background-color: #E6D5B8;
 }
 
 .online-tag {
@@ -218,7 +257,7 @@ const onServiceTap = (item) => {
   height: 24rpx;
   border-radius: 50%;
   background-color: #10b981;
-  border: 4rpx solid #0f172a;
+  border: 4rpx solid #4A3525;
 }
 
 .user-meta {
@@ -308,10 +347,11 @@ const onServiceTap = (item) => {
 }
 
 .order-label {
-  font-size: 22rpx;
-  color: var(--text-muted);
-  font-weight: 600;
+  font-size: 26rpx;
+  color: #6F4E37;
+  font-weight: 700;
   text-align: center;
+  padding: 10rpx 0;
 }
 
 /* Services settings rows */

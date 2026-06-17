@@ -155,7 +155,7 @@ onMounted(() => {
 }
 
 .tab-item.active {
-  color: #4f46e5;
+  color: #6F4E37;
 }
 
 .tab-item.active::after {

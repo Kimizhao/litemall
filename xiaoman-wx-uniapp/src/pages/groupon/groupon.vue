@@ -197,8 +197,8 @@ onMounted(() => {
 
 .tag-groupon {
   padding: 2rpx 12rpx;
-  background-color: rgba(79, 70, 229, 0.08);
-  color: #4f46e5;
+  background-color: rgba(224, 122, 95, 0.08);
+  color: #E07A5F;
   font-size: 16rpx;
   font-weight: 700;
   border-radius: 4rpx;
@@ -206,8 +206,8 @@ onMounted(() => {
 
 .tag-discount {
   padding: 2rpx 12rpx;
-  background-color: rgba(239, 68, 68, 0.08);
-  color: #ef4444;
+  background-color: rgba(224, 122, 95, 0.12);
+  color: #D86B4F;
   font-size: 16rpx;
   font-weight: 700;
   border-radius: 4rpx;

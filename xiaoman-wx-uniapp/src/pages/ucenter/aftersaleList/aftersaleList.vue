@@ -170,10 +170,10 @@ onMounted(() => {
   font-weight: 800;
 }
 
-.status-0 { color: #4f46e5; }
-.status-1 { color: #3b82f6; }
-.status-2 { color: #10b981; }
-.status-3 { color: #ef4444; }
+.status-0 { color: #6F4E37; }
+.status-1 { color: #E07A5F; }
+.status-2 { color: #8B8E4B; }
+.status-3 { color: #D86B4F; }
 
 .refund-row, .reason-row {
   display: flex;
@@ -199,7 +199,7 @@ onMounted(() => {
 
 .detail-link {
   font-size: 22rpx;
-  color: #4f46e5;
+  color: #6F4E37;
   font-weight: 700;
   text-align: right;
 }

@@ -14,21 +14,20 @@ export default {
 
 <style>
 /* Global Styles & Token System */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
-  --secondary-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  --dark-gradient: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-  --accent-gradient: linear-gradient(135deg, #ec4899 0%, #f43f5e 100%);
-  --bg-primary: #f8fafc;
+  --primary-gradient: linear-gradient(135deg, #E07A5F 0%, #D86B4F 100%);
+  --secondary-gradient: linear-gradient(135deg, #8B8E4B 0%, #767A3D 100%);
+  --dark-gradient: linear-gradient(135deg, #6F4E37 0%, #4A3525 100%);
+  --accent-gradient: linear-gradient(135deg, #E07A5F 0%, #C85C43 100%);
+  --bg-primary: #FAF6EE;
   --bg-secondary: #ffffff;
-  --text-main: #0f172a;
-  --text-muted: #64748b;
-  --border-light: rgba(226, 232, 240, 0.8);
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 10px 25px -5px rgba(59, 130, 246, 0.1), 0 8px 16px -6px rgba(59, 130, 246, 0.05);
-  --shadow-lg: 0 20px 35px -10px rgba(15, 23, 42, 0.15);
+  --text-main: #4A3525;
+  --text-muted: #A18276;
+  --border-light: rgba(230, 213, 184, 0.2);
+  --shadow-sm: 0 2px 8px rgba(111, 78, 55, 0.04);
+  --shadow-md: 0 10px 25px -5px rgba(111, 78, 55, 0.08), 0 8px 16px -6px rgba(111, 78, 55, 0.04);
+  --shadow-lg: 0 20px 35px -10px rgba(74, 53, 37, 0.15);
   --radius-sm: 12rpx;
   --radius-md: 24rpx;
   --radius-lg: 36rpx;
@@ -48,12 +47,12 @@ page {
   background: rgba(255, 255, 255, 0.75);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(230, 213, 184, 0.3);
   box-shadow: var(--shadow-sm);
 }
 
 .dark-glass-panel {
-  background: rgba(15, 23, 42, 0.85);
+  background: rgba(74, 53, 37, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);

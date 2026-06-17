@@ -13,7 +13,7 @@
       <!-- 1. 自提订单：在详情页顶部展示到店自取凭证小票 -->
       <view class="receipt-card glass-panel" v-if="pickupInfo">
         <view class="receipt-header">
-          <text class="receipt-shop-name">小满食光手作</text>
+          <text class="receipt-shop-name">小满食光</text>
           <text class="receipt-type-tag">到店自取凭证</text>
         </view>
 
@@ -267,7 +267,7 @@ const onConfirmReceipt = () => {
     content: isPickup ? '您已拿到预订的手作美味了吗？确认后订单将完成。' : '您已收到心仪的手作商品了吗？确认后将打款给独立手艺人。',
     confirmText: isPickup ? '确认取餐' : '确认收货',
     cancelText: '取消',
-    confirmColor: '#10b981',
+    confirmColor: '#8B8E4B',
     success: async (res) => {
       if (res.confirm) {
         try {
@@ -311,14 +311,15 @@ onMounted(() => {
   padding: 48rpx;
   display: flex;
   flex-direction: column;
-  color: #ffffff;
+  color: var(--text-main);
   box-sizing: border-box;
+  background-color: #F5EEDF;
 }
 
-.bg-101 { background: var(--accent-gradient); } /* unpaid */
-.bg-201 { background: var(--primary-gradient); } /* paid/unshipped */
-.bg-301 { background: var(--primary-gradient); } /* shipped */
-.bg-401 { background: var(--secondary-gradient); } /* completed */
+.bg-101 { background: var(--accent-gradient); color: #ffffff; } /* unpaid */
+.bg-201 { background: var(--primary-gradient); color: #ffffff; } /* paid/unshipped */
+.bg-301 { background: var(--primary-gradient); color: #ffffff; } /* shipped */
+.bg-401 { background: var(--secondary-gradient); color: #ffffff; } /* completed */
 
 .status-text {
   font-size: 34rpx;
@@ -466,7 +467,7 @@ onMounted(() => {
 }
 
 .text-red {
-  color: #ef4444;
+  color: #E07A5F;
 }
 
 .divider {
@@ -487,7 +488,7 @@ onMounted(() => {
 
 .total-val {
   font-size: 36rpx;
-  color: #ef4444;
+  color: #E07A5F;
   font-weight: 800;
 }
 

@@ -335,7 +335,7 @@ const onViewAllComments = () => {
 .btn-post {
   font-size: 24rpx;
   font-weight: 700;
-  color: #4f46e5;
+  color: #6F4E37;
 }
 
 .comment-list {
@@ -360,7 +360,7 @@ const onViewAllComments = () => {
   width: 48rpx;
   height: 48rpx;
   border-radius: 50%;
-  background-color: #cbd5e1;
+  background-color: #E6D5B8;
 }
 
 .nickname {
@@ -387,7 +387,7 @@ const onViewAllComments = () => {
 .more-comments {
   text-align: center;
   font-size: 24rpx;
-  color: #4f46e5;
+  color: #6F4E37;
   font-weight: 700;
   padding-top: 24rpx;
   border-top: 1px solid var(--border-light);

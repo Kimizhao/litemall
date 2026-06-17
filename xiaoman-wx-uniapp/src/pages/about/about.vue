@@ -4,7 +4,7 @@
       <!-- Profile Header -->
       <view class="brand-header">
         <text class="brand-logo">🎨</text>
-        <text class="brand-name">Litemall 手作工坊</text>
+        <text class="brand-name">小满食光</text>
         <text class="brand-version">v1.0.0 Port</text>
       </view>
 
@@ -14,7 +14,7 @@
       <view class="section">
         <text class="section-title">品牌故事</text>
         <text class="section-text">
-          在快节奏的现代生活中，我们始终坚信，带有手艺人温度与执念的作品具有不可替代的价值。Litemall 手作工坊精选全国独立手艺人、陶艺师与木雕工匠的匠心杰作，为您呈现充满自然、素雅与意境的生活器物。
+          在快节奏的现代生活中，我们始终坚信，手作的温热与食物的本真能够传递最朴素的幸福。小满食光是一间温馨的家庭手作小店，我们坚持精选新鲜天然的食材，用纯粹的匠心和手艺，为您和家人用心做好每一份安心美味。
         </text>
       </view>
 
@@ -31,7 +31,7 @@
         </view>
         <view class="contact-row">
           <text class="label">✉️ 邮箱</text>
-          <text class="val">artisan@litemall.com</text>
+          <text class="val">contact@xiaomanshiguang.com</text>
         </view>
       </view>
     </view>
@@ -111,7 +111,7 @@
   font-size: 26rpx;
   font-weight: 800;
   color: var(--text-main);
-  border-left: 6rpx solid #4f46e5;
+  border-left: 6rpx solid #6F4E37;
   padding-left: 12rpx;
 }
 
