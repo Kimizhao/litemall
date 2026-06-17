@@ -21,47 +21,38 @@
 -- 1. 系统配置：将未付款订单超时取消时间修改为 1440 分钟（24 小时），防止预约订单被提前取消
 UPDATE `litemall_system` SET `key_value` = '1440' WHERE `key_name` = 'litemall_order_unpaid';
 
--- 2. 清理已有的小满食光分类、商品基本数据以及关联规格与属性（防冗余残留）
-DELETE FROM `litemall_category` WHERE `id` IN (1001000, 1001001, 1002000, 1002001, 1003000, 1003001);
-DELETE FROM `litemall_goods` WHERE `id` BETWEEN 1181001 AND 1181010;
-DELETE FROM `litemall_goods_product` WHERE `id` BETWEEN 1181001 AND 1181010;
-DELETE FROM `litemall_goods_specification` WHERE `goods_id` BETWEEN 1181001 AND 1181010;
-DELETE FROM `litemall_goods_attribute` WHERE `goods_id` BETWEEN 1181001 AND 1181010;
+-- 2. 软删除已有的冲突或旧数据（防止直接删除产生外键或审计问题，设 deleted = 1）
+UPDATE `litemall_category` SET `deleted` = 1, `update_time` = NOW() WHERE `id` IN (1001000, 1001001, 1002000, 1002001, 1003000, 1003001);
+UPDATE `litemall_goods` SET `deleted` = 1, `update_time` = NOW() WHERE `id` BETWEEN 1181001 AND 1181010;
+UPDATE `litemall_goods_product` SET `deleted` = 1, `update_time` = NOW() WHERE `id` BETWEEN 1181001 AND 1181010;
+UPDATE `litemall_goods_specification` SET `deleted` = 1, `update_time` = NOW() WHERE `goods_id` BETWEEN 1181001 AND 1181010;
+UPDATE `litemall_goods_attribute` SET `deleted` = 1, `update_time` = NOW() WHERE `goods_id` BETWEEN 1181001 AND 1181010;
 
--- 3. 插入一级分类 (L1) 与对应的二级分类 (L2)
--- 招牌三明治 🥪
+-- 3. 插入或恢复一级分类 (L1) 与对应的二级分类 (L2) （若已存在则更新属性并恢复 deleted = 0）
 INSERT INTO `litemall_category` (`id`, `name`, `keywords`, `desc`, `pid`, `icon_url`, `pic_url`, `level`, `sort_order`, `add_time`, `update_time`, `deleted`) VALUES
 (1001000, '招牌三明治 🥪', '三明治', '经典美味手作三明治', 0, '', '', 'L1', 1, NOW(), NOW(), 0),
-(1001001, '手作三明治', '三明治', '美味三明治二级分类', 1001000, '', '', 'L2', 1, NOW(), NOW(), 0);
-
--- 手作简餐 🍙
-INSERT INTO `litemall_category` (`id`, `name`, `keywords`, `desc`, `pid`, `icon_url`, `pic_url`, `level`, `sort_order`, `add_time`, `update_time`, `deleted`) VALUES
+(1001001, '手作三明治', '三明治', '美味三明治二级分类', 1001000, '', '', 'L2', 1, NOW(), NOW(), 0),
 (1002000, '手作简餐 🍙', '简餐,饭团', '暖心手作简餐饭团', 0, '', '', 'L1', 2, NOW(), NOW(), 0),
-(1002001, '手作饭团', '饭团,简餐', '美味饭团二级分类', 1002000, '', '', 'L2', 1, NOW(), NOW(), 0);
-
--- 现榨饮品 🍹
-INSERT INTO `litemall_category` (`id`, `name`, `keywords`, `desc`, `pid`, `icon_url`, `pic_url`, `level`, `sort_order`, `add_time`, `update_time`, `deleted`) VALUES
+(1002001, '手作饭团', '饭团,简餐', '美味饭团二级分类', 1002000, '', '', 'L2', 1, NOW(), NOW(), 0),
 (1003000, '现榨饮品 🍹', '饮品,椰汁,生椰', '天然现榨清凉饮品', 0, '', '', 'L1', 3, NOW(), NOW(), 0),
-(1003001, '椰风饮品', '椰汁,饮品', '椰乳饮品二级分类', 1003000, '', '', 'L2', 1, NOW(), NOW(), 0);
+(1003001, '椰风饮品', '椰汁,饮品', '椰乳饮品二级分类', 1003000, '', '', 'L2', 1, NOW(), NOW(), 0)
+ON DUPLICATE KEY UPDATE `name`=VALUES(`name`), `keywords`=VALUES(`keywords`), `desc`=VALUES(`desc`), `pid`=VALUES(`pid`), `icon_url`=VALUES(`icon_url`), `pic_url`=VALUES(`pic_url`), `level`=VALUES(`level`), `sort_order`=VALUES(`sort_order`), `update_time`=NOW(), `deleted`=0;
 
--- 4. 插入商品基本信息 (Goods - 关联二级分类 ID)
--- 专柜价 counter_price 设定为原价，零售价 retail_price 设定为 8.8 折后的销售价
+-- 4. 插入或恢复商品基本信息 (Goods - 关联二级分类 ID)
 INSERT INTO `litemall_goods` (`id`, `goods_sn`, `name`, `category_id`, `brand_id`, `gallery`, `keywords`, `brief`, `is_on_sale`, `sort_order`, `pic_url`, `share_url`, `is_new`, `is_hot`, `unit`, `counter_price`, `retail_price`, `detail`, `add_time`, `update_time`, `deleted`) VALUES
--- 招牌三明治系列 (关联分类: 1001001)
 (1181001, 'XM-001', '烟熏培根三明治', 1001001, 0, '["/static/xiaoman/sandwich_4.jpg"]', '培根,三明治', '精选培根、溏心煎蛋、新鲜番茄、生菜、玉米沙拉', 1, 1, '/static/xiaoman/sandwich_4.jpg', '', 1, 1, '份', 10.00, 8.80, '手作烟熏培根三明治', NOW(), NOW(), 0),
 (1181002, 'XM-002', '芝士牛肉饼三明治', 1001001, 0, '["/static/xiaoman/sandwich_2.jpg"]', '牛肉,三明治', '手工牛肉饼、芝士片、酸黄瓜、紫甘蓝、玉米沙拉', 1, 2, '/static/xiaoman/sandwich_2.jpg', '', 1, 1, '份', 12.00, 10.60, '手作芝士牛肉饼三明治', NOW(), NOW(), 0),
 (1181003, 'XM-003', '紫薯里脊三明治', 1001001, 0, '["/static/xiaoman/sandwich_12.jpg"]', '紫薯,里脊', '手作紫薯泥、香煎里脊肉、流心煎蛋、新鲜生菜', 1, 3, '/static/xiaoman/sandwich_12.jpg', '', 1, 1, '份', 12.00, 10.60, '手作紫薯里脊三明治', NOW(), NOW(), 0),
 (1181004, 'XM-004', '活力热狗三明治', 1001001, 0, '["/static/xiaoman/sandwich_13.jpg"]', '热狗,三明治', '珍味烤肠、脆青瓜片、香甜玉米粒、特调番茄酱', 1, 4, '/static/xiaoman/sandwich_13.jpg', '', 1, 0, '份', 9.00, 7.90, '手作活力热狗三明治', NOW(), NOW(), 0),
--- 手作简餐系列 (关联分类: 1002001)
 (1181005, 'XM-005', '小满紫米饭团 (基础款)', 1002001, 0, '["/static/xiaoman/rice_1.jpg"]', '紫米,饭团', '糯香紫米、脆萝卜丁、黄金肉松、香脆油条、沙拉酱', 1, 5, '/static/xiaoman/rice_1.jpg', '', 1, 1, '个', 6.00, 5.30, '手作小满紫米饭团', NOW(), NOW(), 0),
 (1181006, 'XM-006', '烤肠紫米饭团', 1002001, 0, '["/static/xiaoman/rice_1.jpg"]', '烤肠,饭团', '基础款饭团配料，特别加入一整根脆皮烤肠', 1, 6, '/static/xiaoman/rice_1.jpg', '', 1, 0, '个', 8.00, 7.00, '手作烤肠紫米饭团', NOW(), NOW(), 0),
 (1181007, 'XM-007', '咸蛋黄紫米饭团', 1002001, 0, '["/static/xiaoman/rice_1.jpg"]', '咸蛋黄,饭团', '基础款饭团配料，特别加入两颗起沙咸蛋黄', 1, 7, '/static/xiaoman/rice_1.jpg', '', 1, 1, '个', 9.00, 7.90, '手作咸蛋黄紫米饭团', NOW(), NOW(), 0),
--- 现榨饮品系列 (关联分类: 1003001)
 (1181008, 'XM-008', '翡翠椰子汁', 1003001, 0, '["/static/xiaoman/rice_1.jpg"]', '椰子汁', '原榨清甜椰子水，健康天然无添加，清热消暑', 1, 8, '/static/xiaoman/rice_1.jpg', '', 1, 0, '杯', 12.00, 10.60, '现榨清甜翡翠椰子汁', NOW(), NOW(), 0),
 (1181009, 'XM-009', '柠檬黄椰汁', 1003001, 0, '["/static/xiaoman/rice_1.jpg"]', '柠檬,生椰', '清爽香水柠檬原汁，融入纯厚生椰乳', 1, 9, '/static/xiaoman/rice_1.jpg', '', 1, 1, '杯', 10.00, 8.80, '现榨柠檬生椰乳', NOW(), NOW(), 0),
-(1181010, 'XM-010', '草莓椰椰', 1003001, 0, '["/static/xiaoman/rice_1.jpg"]', '草莓,生椰', '手捣新鲜草莓果肉，加入浓郁椰子乳', 1, 10, '/static/xiaoman/rice_1.jpg', '', 1, 1, '杯', 8.00, 7.00, '手捣草莓生椰乳', NOW(), NOW(), 0);
+(1181010, 'XM-010', '草莓椰椰', 1003001, 0, '["/static/xiaoman/rice_1.jpg"]', '草莓,生椰', '手捣新鲜草莓果肉，加入浓郁椰子乳', 1, 10, '/static/xiaoman/rice_1.jpg', '', 1, 1, '杯', 8.00, 7.00, '手捣草莓生椰乳', NOW(), NOW(), 0)
+ON DUPLICATE KEY UPDATE `goods_sn`=VALUES(`goods_sn`), `name`=VALUES(`name`), `category_id`=VALUES(`category_id`), `brand_id`=VALUES(`brand_id`), `gallery`=VALUES(`gallery`), `keywords`=VALUES(`keywords`), `brief`=VALUES(`brief`), `is_on_sale`=VALUES(`is_on_sale`), `sort_order`=VALUES(`sort_order`), `pic_url`=VALUES(`pic_url`), `share_url`=VALUES(`share_url`), `is_new`=VALUES(`is_new`), `is_hot`=VALUES(`is_hot`), `unit`=VALUES(`unit`), `counter_price`=VALUES(`counter_price`), `retail_price`=VALUES(`retail_price`), `detail`=VALUES(`detail`), `update_time`=NOW(), `deleted`=0;
 
--- 5. 插入销售产品条目 (Product)
+-- 5. 插入或恢复销售产品条目 (Product)
 INSERT INTO `litemall_goods_product` (`id`, `goods_id`, `specifications`, `price`, `number`, `url`, `add_time`, `update_time`, `deleted`) VALUES
 (1181001, 1181001, '["标准"]', 8.80, 200, '', NOW(), NOW(), 0),
 (1181002, 1181002, '["标准"]', 10.60, 200, '', NOW(), NOW(), 0),
@@ -72,9 +63,10 @@ INSERT INTO `litemall_goods_product` (`id`, `goods_id`, `specifications`, `price
 (1181007, 1181007, '["标准"]', 7.90, 200, '', NOW(), NOW(), 0),
 (1181008, 1181008, '["标准"]', 10.60, 200, '', NOW(), NOW(), 0),
 (1181009, 1181009, '["标准"]', 8.80, 200, '', NOW(), NOW(), 0),
-(1181010, 1181010, '["标准"]', 7.00, 200, '', NOW(), NOW(), 0);
+(1181010, 1181010, '["标准"]', 7.00, 200, '', NOW(), NOW(), 0)
+ON DUPLICATE KEY UPDATE `goods_id`=VALUES(`goods_id`), `specifications`=VALUES(`specifications`), `price`=VALUES(`price`), `number`=VALUES(`number`), `url`=VALUES(`url`), `update_time`=NOW(), `deleted`=0;
 
--- 6. 插入商品对应规格与属性，防前端加载出错
+-- 6. 插入或恢复规格与属性
 INSERT INTO `litemall_goods_specification` (`goods_id`, `specification`, `value`, `pic_url`, `add_time`, `update_time`, `deleted`) VALUES
 (1181001, '规格', '标准', '', NOW(), NOW(), 0),
 (1181002, '规格', '标准', '', NOW(), NOW(), 0),
@@ -85,7 +77,8 @@ INSERT INTO `litemall_goods_specification` (`goods_id`, `specification`, `value`
 (1181007, '规格', '标准', '', NOW(), NOW(), 0),
 (1181008, '规格', '标准', '', NOW(), NOW(), 0),
 (1181009, '规格', '标准', '', NOW(), NOW(), 0),
-(1181010, '规格', '标准', '', NOW(), NOW(), 0);
+(1181010, '规格', '标准', '', NOW(), NOW(), 0)
+ON DUPLICATE KEY UPDATE `specification`=VALUES(`specification`), `value`=VALUES(`value`), `pic_url`=VALUES(`pic_url`), `update_time`=NOW(), `deleted`=0;
 
 INSERT INTO `litemall_goods_attribute` (`goods_id`, `attribute`, `value`, `add_time`, `update_time`, `deleted`) VALUES
 (1181001, '用料', '精选培根、溏心煎蛋、新鲜番茄、生菜、玉米沙拉', NOW(), NOW(), 0),
@@ -97,7 +90,8 @@ INSERT INTO `litemall_goods_attribute` (`goods_id`, `attribute`, `value`, `add_t
 (1181007, '用料', '基础款饭团配料，特别加入两颗起沙咸蛋黄', NOW(), NOW(), 0),
 (1181008, '用料', '原榨清甜椰子水，健康天然无添加，清热消暑', NOW(), NOW(), 0),
 (1181009, '用料', '清爽香水柠檬原汁，融入纯厚生椰乳', NOW(), NOW(), 0),
-(1181010, '用料', '手捣新鲜草莓果肉，加入浓郁椰子乳', NOW(), NOW(), 0);
+(1181010, '用料', '手捣新鲜草莓果肉，加入浓郁椰子乳', NOW(), NOW(), 0)
+ON DUPLICATE KEY UPDATE `attribute`=VALUES(`attribute`), `value`=VALUES(`value`), `update_time`=NOW(), `deleted`=0;
 ```
 
 ---
