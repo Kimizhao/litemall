@@ -12,25 +12,21 @@
   height: 96rpx;
   line-height: 96rpx;
   font-size: 30rpx;
-  border-radius: 6rpx;
+  border-radius: 50rpx;
   width: 90%;
   color: #fff;
-  right: 0;
+  background-image: linear-gradient(to right, #07c160 0%, #06ae56 100%);
   display: flex;
   justify-content: center;
   align-items: center;
-  position: flex;
-  bottom: 0;
-  left: 0;
-  padding: 0;
   margin-left: 5%;
   text-align: center;
-  /* padding-left: -5rpx; */
-  border-top-left-radius: 50rpx;
-  border-bottom-left-radius: 50rpx;
-  border-top-right-radius: 50rpx;
-  border-bottom-right-radius: 50rpx;
   letter-spacing: 3rpx;
+  box-shadow: 0 8px 16px rgba(7, 193, 96, 0.2);
+}
+
+.wx-login-btn::after {
+  border: none;
 }
 
 .account-login-btn {
@@ -40,22 +36,205 @@
   font-size: 30rpx;
   height: 96rpx;
   line-height: 96rpx;
-  right: 0;
   display: flex;
   justify-content: center;
   align-items: center;
-  position: flex;
-  bottom: 0;
-  left: 0;
-  border-radius: 0;
-  padding: 0;
+  border-radius: 50rpx;
   margin-left: 5%;
   text-align: center;
-  /* padding-left: -5rpx; */
-  border-top-left-radius: 50rpx;
-  border-bottom-left-radius: 50rpx;
-  border-top-right-radius: 50rpx;
-  border-bottom-right-radius: 50rpx;
   letter-spacing: 3rpx;
-  background-image: linear-gradient(to right, #9a9ba1 0%, #9a9ba1 100%);
+  background-image: linear-gradient(to right, #9a9ba1 0%, #8a8b91 100%);
+  box-shadow: 0 8px 16px rgba(154, 155, 161, 0.15);
+}
+
+.account-login-btn::after {
+  border: none;
+}
+
+/* Glassmorphic Overlay Backdrop */
+.auth-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: flex-end; /* Align sheet to the bottom */
+}
+
+/* Meituan-Style Bottom Sheet Drawer */
+.auth-modal-card.bottom-sheet {
+  width: 100%;
+  background: #ffffff;
+  border-radius: 40rpx 40rpx 0 0; /* Rounded top corners only */
+  padding: 30rpx 40rpx 60rpx 40rpx;
+  box-sizing: border-box;
+  box-shadow: 0 -10px 25px -5px rgba(0, 0, 0, 0.1);
+  animation: slideUpIn 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+@keyframes slideUpIn {
+  0% {
+    transform: translateY(100%);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+/* Small Drag Handle Indicator */
+.drag-handle {
+  width: 80rpx;
+  height: 8rpx;
+  background: #e2e8f0;
+  border-radius: 4rpx;
+  margin: 0 auto 30rpx auto;
+}
+
+/* Modal Header Layout */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40rpx;
+}
+
+.logo-title-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.app-logo {
+  width: 56rpx;
+  height: 56rpx;
+  background: #ffd000; /* Classic Meituan Yellow for high familiarity */
+  color: #1e293b;
+  font-weight: 800;
+  font-size: 24rpx;
+  border-radius: 12rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(255, 208, 0, 0.3);
+}
+
+.modal-title {
+  font-size: 32rpx;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.close-btn {
+  font-size: 48rpx;
+  color: #94a3b8;
+  font-weight: 300;
+  padding: 10rpx;
+  line-height: 1;
+}
+
+/* Meituan List Card Group */
+.profile-rows-card {
+  border-top: 1rpx solid #f1f5f9;
+  border-bottom: 1rpx solid #f1f5f9;
+  margin-bottom: 50rpx;
+}
+
+/* Avatar row (Button wrapper) */
+.profile-row-btn {
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  border: none;
+  line-height: normal;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 120rpx;
+  border-bottom: 1rpx solid #f8fafc;
+  text-align: left;
+  border-radius: 0;
+  width: 100%;
+}
+
+.profile-row-btn::after {
+  border: none;
+}
+
+/* Nickname row */
+.profile-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 120rpx;
+}
+
+.row-label {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #334155;
+  width: 150rpx;
+}
+
+.row-right {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.row-avatar-preview {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  border: 1rpx solid #e2e8f0;
+}
+
+.row-nickname-input {
+  font-size: 28rpx;
+  color: #1e293b;
+  text-align: right;
+  width: 100%;
+  font-weight: 500;
+}
+
+.row-arrow {
+  font-size: 36rpx;
+  color: #cbd5e1;
+  font-weight: 500;
+  margin-left: 10rpx;
+  margin-top: -4rpx;
+}
+
+/* Bottom Action Button (Meituan Style Full-width) */
+.modal-actions {
+  width: 100%;
+}
+
+.confirm-btn {
+  width: 100% !important;
+  height: 96rpx;
+  background: #ffd000; /* Meituan classic yellow button */
+  color: #1e293b;
+  font-size: 32rpx;
+  font-weight: 800;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 12px rgba(255, 208, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.confirm-btn::after {
+  border: none;
+}
+
+.confirm-btn:active {
+  transform: scale(0.98);
+  opacity: 0.9;
 }

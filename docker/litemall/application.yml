@@ -37,8 +37,8 @@ pagehelper:
 litemall:
   # 开发者应该设置成自己的wx相关信息
   wx:
-    app-id: wxa5b486c6b918ecfb
-    app-secret: e04004829d4c383b4db7769d88dfbca1
+    app-id: wx63fff6fe7edda552
+    app-secret: 9167db94fb355504a488e616c967f01e
     mch-id: 111111
     mch-key: xxxxxx
     notify-url: http://122.51.199.160:8080/wx/order/pay-notify

@@ -1,7 +1,51 @@
 <view class="container">
   <view class="login-box">
-    <button wx:if="{{canIUseGetUserProfile}}" type="primary" class="wx-login-btn" bindtap="wxLogin">微信直接登录</button>  
-    <button wx:else type="primary" open-type="getUserProfile" class="wx-login-btn" open-type="getUserInfo" bindgetuserinfo="wxLogin">微信直接登录</button>
+    <!-- Main page login buttons -->
+    <button type="primary" class="wx-login-btn" bindtap="openAuthModal">微信快捷登录</button>
     <button type="primary" class="account-login-btn" bindtap="accountLogin">账号登录</button>
+  </view>
+
+  <!-- Meituan-Style Bottom Sheet WeChat Auth Drawer -->
+  <view class="auth-modal-overlay" wx:if="{{showAuthModal}}" bindtap="closeAuthModal">
+    <!-- Stop propagation of clicks inside the sheet card -->
+    <view class="auth-modal-card bottom-sheet" catchtap="preventBubble">
+      <!-- Drag handle at top of sheet -->
+      <view class="drag-handle"></view>
+
+      <!-- Header row containing Logo, Title, and Close Button -->
+      <view class="modal-header">
+        <view class="logo-title-row">
+          <view class="app-logo">LM</view>
+          <text class="modal-title">申请使用微信头像和昵称</text>
+        </view>
+        <view class="close-btn" bindtap="closeAuthModal">×</view>
+      </view>
+
+      <!-- Meituan-Style List Configuration Rows -->
+      <view class="profile-rows-card">
+        <!-- 1. Avatar selector row -->
+        <button class="profile-row-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+          <text class="row-label">头像</text>
+          <view class="row-right">
+            <image class="row-avatar-preview" src="{{avatarUrl}}"></image>
+            <text class="row-arrow">›</text>
+          </view>
+        </button>
+
+        <!-- 2. Nickname input row -->
+        <view class="profile-row">
+          <text class="row-label">昵称</text>
+          <view class="row-right">
+            <input type="nickname" class="row-nickname-input" placeholder="请选择微信昵称" value="{{nickName}}" bindblur="onNicknameBlur" bindinput="onNicknameInput" placeholder-style="color: #94a3b8;" />
+            <text class="row-arrow">›</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- Bottom Action Button -->
+      <view class="modal-actions">
+        <button class="confirm-btn" bindtap="handleWxLogin">同意并登录</button>
+      </view>
+    </view>
   </view>
 </view>

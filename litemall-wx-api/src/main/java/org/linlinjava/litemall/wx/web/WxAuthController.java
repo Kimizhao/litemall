@@ -156,6 +156,9 @@ public class WxAuthController {
             // 新用户发送注册优惠券
             couponAssignService.assignForRegister(user.getId());
         } else {
+            user.setNickname(userInfo.getNickName());
+            user.setAvatar(userInfo.getAvatarUrl());
+            user.setGender(userInfo.getGender());
             user.setLastLoginTime(LocalDateTime.now());
             user.setLastLoginIp(IpUtil.getIpAddr(request));
             user.setSessionKey(sessionKey);

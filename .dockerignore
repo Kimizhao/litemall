@@ -1,0 +1,11 @@
+.git
+.idea
+.github
+.workflow
+doc
+deploy
+docker/db/data
+**/node_modules
+**/dist
+**/target
+**/*.log
