@@ -12,13 +12,7 @@
       </view>
     </view>
 
-    <!-- 2. 试营业滚动公告栏 -->
-    <view class="announcement-bar">
-      <text class="announcement-icon">🎉</text>
-      <view class="announcement-text-wrap">
-        <view class="announcement-text">新店试营业，全场 8.8 折！微信扫码免费领饭团！</view>
-      </view>
-    </view>
+
 
     <!-- 3. 主体内容区 -->
     <view class="main-content">
@@ -57,7 +51,7 @@
           <text class="info-icon">📞</text>
           <div class="info-text-wrap">
             <!-- <text class="info-label">联系电话</text> -->
-            <text class="info-value text-link">138-0000-0000</text>
+            <text class="info-value text-link">182-5903-3410</text>
           </div>
           <view class="btn-call">呼叫</view>
         </view>
@@ -69,13 +63,9 @@
         <view class="owner-card-body">
           <view class="owner-info">
             <text class="owner-desc">扫码或长按保存二维码添加。</text>
-            <view class="owner-wechat-id">
-              <text class="wechat-label">微信号：</text>
-              <text class="wechat-value">ChenW***esto</text>
-            </view>
           </view>
           <view class="owner-qr-wrapper" @tap="onPreviewQR">
-            <image src="/static/xiaoman/contact_qr.png" :show-menu-by-longpress="true" mode="aspectFit" class="owner-qr-img" />
+            <image src="/static/xiaoman/contact_qr.png?v=20260714_cropped" :show-menu-by-longpress="true" mode="aspectFit" class="owner-qr-img" />
           </view>
         </view>
       </view>
@@ -172,8 +162,8 @@ const onAddressTap = () => {
 // 预览主理人微信二维码（支持长按识别）
 const onPreviewQR = () => {
   uni.previewImage({
-    urls: ['/static/xiaoman/contact_qr.png'],
-    current: '/static/xiaoman/contact_qr.png'
+    urls: ['/static/xiaoman/contact_qr.png?v=20260714_cropped'],
+    current: '/static/xiaoman/contact_qr.png?v=20260714_cropped'
   })
 }
 </script>

@@ -29,6 +29,8 @@
 
       <el-table-column align="center" min-width="100" :label="$t('mall_category.table.desc')" prop="desc" />
 
+      <el-table-column align="center" label="排序值" prop="sortOrder" />
+
       <el-table-column align="center" :label="$t('mall_category.table.level')" prop="level">
         <template slot-scope="scope">
           <el-tag :type="scope.row.level === 'L1' ? 'primary' : 'info' ">{{ $t(scope.row.level === 'L1' ? 'mall_category.value.level_L1' : 'mall_category.value.level_L2') }}</el-tag>
@@ -89,6 +91,9 @@
         </el-form-item>
         <el-form-item :label="$t('mall_category.form.desc')" prop="desc">
           <el-input v-model="dataForm.desc"/>
+        </el-form-item>
+        <el-form-item label="排序值" prop="sortOrder">
+          <el-input-number v-model="dataForm.sortOrder" :min="1" placeholder="数值越小越靠前"/>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -154,7 +159,8 @@ export default {
         pid: 0,
         desc: '',
         iconUrl: '',
-        picUrl: ''
+        picUrl: '',
+        sortOrder: 100
       },
       dialogFormVisible: false,
       dialogStatus: '',
@@ -205,7 +211,8 @@ export default {
         pid: 0,
         desc: '',
         iconUrl: '',
-        picUrl: ''
+        picUrl: '',
+        sortOrder: 100
       }
     },
     onLevelChange: function(value) {

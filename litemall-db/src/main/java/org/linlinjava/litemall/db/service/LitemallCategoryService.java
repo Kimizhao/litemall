@@ -20,6 +20,7 @@ public class LitemallCategoryService {
     public List<LitemallCategory> queryL1WithoutRecommend(int offset, int limit) {
         LitemallCategoryExample example = new LitemallCategoryExample();
         example.or().andLevelEqualTo("L1").andNameNotEqualTo("推荐").andDeletedEqualTo(false);
+        example.setOrderByClause("sort_order asc, id asc");
         PageHelper.startPage(offset, limit);
         return categoryMapper.selectByExample(example);
     }
@@ -27,6 +28,7 @@ public class LitemallCategoryService {
     public List<LitemallCategory> queryL1(int offset, int limit) {
         LitemallCategoryExample example = new LitemallCategoryExample();
         example.or().andLevelEqualTo("L1").andDeletedEqualTo(false);
+        example.setOrderByClause("sort_order asc, id asc");
         PageHelper.startPage(offset, limit);
         return categoryMapper.selectByExample(example);
     }
@@ -34,18 +36,21 @@ public class LitemallCategoryService {
     public List<LitemallCategory> queryL1() {
         LitemallCategoryExample example = new LitemallCategoryExample();
         example.or().andLevelEqualTo("L1").andDeletedEqualTo(false);
+        example.setOrderByClause("sort_order asc, id asc");
         return categoryMapper.selectByExample(example);
     }
 
     public List<LitemallCategory> queryByPid(Integer pid) {
         LitemallCategoryExample example = new LitemallCategoryExample();
         example.or().andPidEqualTo(pid).andDeletedEqualTo(false);
+        example.setOrderByClause("sort_order asc, id asc");
         return categoryMapper.selectByExample(example);
     }
 
     public List<LitemallCategory> queryL2ByIds(List<Integer> ids) {
         LitemallCategoryExample example = new LitemallCategoryExample();
         example.or().andIdIn(ids).andLevelEqualTo("L2").andDeletedEqualTo(false);
+        example.setOrderByClause("sort_order asc, id asc");
         return categoryMapper.selectByExample(example);
     }
 

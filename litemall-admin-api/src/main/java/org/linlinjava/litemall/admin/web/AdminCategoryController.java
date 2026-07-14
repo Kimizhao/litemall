@@ -44,6 +44,7 @@ public class AdminCategoryController {
             categoryVO.setKeywords(category.getKeywords());
             categoryVO.setName(category.getName());
             categoryVO.setLevel(category.getLevel());
+            categoryVO.setSortOrder(category.getSortOrder());
 
             List<CategoryVo> children = new ArrayList<>();
             List<LitemallCategory> subCategoryList = categoryService.queryByPid(category.getId());
@@ -57,6 +58,7 @@ public class AdminCategoryController {
                 subCategoryVo.setName(subCategory.getName());
                 subCategoryVo.setLevel(subCategory.getLevel());
                 subCategoryVo.setPid(subCategory.getPid());
+                subCategoryVo.setSortOrder(subCategory.getSortOrder());
 
                 children.add(subCategoryVo);
             }

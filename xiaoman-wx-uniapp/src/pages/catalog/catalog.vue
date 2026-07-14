@@ -13,12 +13,12 @@
     </view>
 
     <!-- 2. 试营业滚动公告栏 -->
-    <view class="announcement-bar">
+    <!-- <view class="announcement-bar">
       <text class="announcement-icon">🎉</text>
       <view class="announcement-text-wrap">
         <view class="announcement-text">新店试营业，全场 8.8 折！微信扫码免费领饭团！</view>
       </view>
-    </view>
+    </view> -->
 
     <!-- 3. 双栏自适应点餐区 -->
     <view class="menu-container">
@@ -31,7 +31,6 @@
           :class="{ active: activeCategoryId === item.id }"
           @tap="onCategorySelect(item.id)"
         >
-          <text class="category-icon">{{ item.icon }}</text>
           <text class="category-label">{{ item.name }}</text>
         </view>
       </scroll-view>
@@ -139,15 +138,12 @@ const cartTotal = ref({
   checkedGoodsCount: 0,
   checkedGoodsAmount: 0.00
 })
-const activeCategoryId = ref(1001000) // 默认选中三明治
+const activeCategoryId = ref(null) // 默认选中分类 ID，动态设定
 const showCartDrawer = ref(false)
 
-// 分类硬编码定义（关联二级分类ID）
-const categories = ref([
-  { id: 1001000, name: '招牌三明治', icon: '🥪', l2Id: 1001001 },
-  { id: 1002000, name: '手作简餐', icon: '🍙', l2Id: 1002001 },
-  { id: 1003000, name: '现榨饮品', icon: '🍹', l2Id: 1003001 }
-])
+const categories = ref([])
+
+// 不需要单独提取 Emoji 图标，分类名称直接完整显示
 
 const currentCategoryName = computed(() => {
   const cat = categories.value.find(item => item.id === activeCategoryId.value)
@@ -168,31 +164,69 @@ const cartOriginalTotal = computed(() => {
   return total
 })
 
-// 根据当前一级分类对应的二级分类过滤商品
+// 根据当前一级分类下的所有二级分类动态过滤商品
 const filteredGoods = computed(() => {
-  let targetL2Id = 1001001
-  if (activeCategoryId.value === 1002000) targetL2Id = 1002001
-  else if (activeCategoryId.value === 1003000) targetL2Id = 1003001
+  const activeCat = categories.value.find(item => item.id === activeCategoryId.value)
+  if (!activeCat || !activeCat.l2SubCategories) return []
   
-  return goodsList.value.filter(item => item.categoryId === targetL2Id)
+  const subIds = activeCat.l2SubCategories.map(sub => sub.id)
+  return goodsList.value.filter(item => subIds.includes(item.categoryId))
 })
 
-// 一次性从后台精准加载小满食光的 10 款商品
+// 动态从后台加载分类与对应的商品列表
 const loadGoodsData = async () => {
   try {
-    const [res1, res2, res3] = await Promise.all([
-      request({ url: `${api.GoodsList}?categoryId=1001001&page=1&limit=100`, method: 'GET' }),
-      request({ url: `${api.GoodsList}?categoryId=1002001&page=1&limit=100`, method: 'GET' }),
-      request({ url: `${api.GoodsList}?categoryId=1003001&page=1&limit=100`, method: 'GET' })
-    ])
+    // 1. 获取所有分类目录
+    const resCatalog = await request({ url: api.CatalogAll, method: 'GET' })
+    const l1List = resCatalog.categoryList || []
+    const allL2List = resCatalog.allList || {}
     
-    const list1 = ((res1 && res1.list) || []).map(item => ({ ...item, categoryId: 1001001 }))
-    const list2 = ((res2 && res2.list) || []).map(item => ({ ...item, categoryId: 1002001 }))
-    const list3 = ((res3 && res3.list) || []).map(item => ({ ...item, categoryId: 1003001 }))
+    // 2. 动态构建分类列表
+    categories.value = l1List.map(l1 => {
+      const l2Sub = allL2List[l1.id] || []
+      const firstL2Id = l2Sub.length > 0 ? l2Sub[0].id : null
+      return {
+        id: l1.id,
+        name: l1.name, // 直接使用包含 Emoji 的完整数据库类目名称
+        l2Id: firstL2Id,
+        l2SubCategories: l2Sub
+      }
+    })
     
-    goodsList.value = [...list1, ...list2, ...list3]
+    // 3. 设置默认选中的一级分类
+    if (!activeCategoryId.value && categories.value.length > 0) {
+      activeCategoryId.value = categories.value[0].id
+    }
+    
+    // 4. 收集所有二级分类并加载对应的商品
+    const l2Ids = []
+    categories.value.forEach(cat => {
+      if (cat.l2SubCategories) {
+        cat.l2SubCategories.forEach(sub => {
+          if (sub.id && !l2Ids.includes(sub.id)) {
+            l2Ids.push(sub.id)
+          }
+        })
+      }
+    })
+    
+    if (l2Ids.length > 0) {
+      const goodsPromises = l2Ids.map(id => 
+        request({ url: `${api.GoodsList}?categoryId=${id}&page=1&limit=100`, method: 'GET' })
+          .then(res => ((res && res.list) || []).map(item => ({ ...item, categoryId: id })))
+          .catch(err => {
+            console.error(`Failed to load goods for category ${id}:`, err)
+            return []
+          })
+      )
+      
+      const results = await Promise.all(goodsPromises)
+      goodsList.value = results.reduce((acc, curr) => acc.concat(curr), [])
+    } else {
+      goodsList.value = []
+    }
   } catch (err) {
-    console.error('Failed to load Xiaoman goods data:', err)
+    console.error('Failed to load Xiaoman goods data dynamically:', err)
   }
 }
 

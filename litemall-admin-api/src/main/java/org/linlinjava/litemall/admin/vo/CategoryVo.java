@@ -11,6 +11,7 @@ public class CategoryVo {
     private String picUrl;
     private String level;
     private Integer pid;
+    private Byte sortOrder;
     private List<CategoryVo> children;
 
     public List<CategoryVo> getChildren() {
@@ -83,5 +84,13 @@ public class CategoryVo {
 
     public void setPid(Integer pid) {
         this.pid = pid;
+    }
+
+    public Byte getSortOrder() {
+        return sortOrder;
+    }
+
+    public void setSortOrder(Byte sortOrder) {
+        this.sortOrder = sortOrder;
     }
 }

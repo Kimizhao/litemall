@@ -13,6 +13,7 @@ export default {
 
   CatalogList: WxApiRoot + 'catalog/index',         // 分类目录全部分类数据接口
   CatalogCurrent: WxApiRoot + 'catalog/current',     // 分类目录当前分类数据接口
+  CatalogAll: WxApiRoot + 'catalog/all',             // 分类目录全部数据（含二级分类）
 
   AuthLoginByWeixin: WxApiRoot + 'auth/login_by_weixin', // 微信登录
   AuthLoginByAccount: WxApiRoot + 'auth/login',     // 账号登录

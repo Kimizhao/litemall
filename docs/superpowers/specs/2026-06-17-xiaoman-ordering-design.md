@@ -231,6 +231,23 @@ export function generatePickupCode(orderId) {
   * 若返回值非空，则在顶部新增醒目的“到店自提凭证”区块。展示利用 `generatePickupCode(order.id)` 生成的取餐号（如 `A012`），自取时间与客户联系电话、备注要求。
   * 若返回为空，则走原有的外卖地址配送物流追踪卡片，实现丝滑降级，确保常规订单详情页不会崩溃。
 
+#### 3.6 手机号登录与验证码绕过 (Mobile Login & SMS Bypass)
+
+* **手机号登录支持**：
+  * **后端 (`WxAuthController.java`)**：登录接口 `/wx/auth/login` 支持以手机号作为用户名登录。如果按输入的用户名查询不到用户，系统会 fallback 使用手机号进行查询 (`queryByMobile`)。
+  * **前端 (`login.vue`)**：输入框占位符更新为“请输入用户名或手机号”。
+* **开发与测试环境短信验证码绕过**：
+  * **后端 (`WxAuthController.java`)**：在 `register`、`reset`、`resetPhone` 等短信验证码校验接口中，额外判断验证码若为 `'123456'` 则直接通过校验，免去真实短信网关的对接需求。
+  * **前端 (`register.vue` / `reset.vue`)**：隐藏原有的验证码输入框及“获取验证码”按钮，在 Vue 脚本中将 verification code 变量默认赋值为 `'123456'`，使用户直接点击提交即可完成注册/修改。
+
+#### 3.7 主理人微信二维码与长按识别 (Owner WeChat QR Code)
+
+* **展示模块**：首页商品列表上方添加“主理人微信”专属卡片，展示微信号并提供主理人联系方式。
+* **放大与识别**：
+  * 卡片中的二维码组件绑定了 `@tap="onPreviewQR"` 动作。
+  * `onPreviewQR` 方法调用 `uni.previewImage` 预览二维码图片（图片位于 `/static/xiaoman/contact_qr.png`）。
+  * 预览时自动支持微信原生长按弹窗功能（包括“发送给朋友”、“保存图片”以及“识别图中的二维码”），方便用户极速添加客服/主理人。
+
 ---
 
 ## 4. 验证方案 (Verification Plan)
