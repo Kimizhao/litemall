@@ -12,7 +12,13 @@
       </view>
     </view>
 
-
+    <!-- 2. 滚动公告栏 -->
+    <view class="announcement-bar" v-if="announcement">
+      <text class="announcement-icon">🎉</text>
+      <view class="announcement-text-wrap">
+        <view class="announcement-text">{{ announcement }}</view>
+      </view>
+    </view>
 
     <!-- 3. 主体内容区 -->
     <view class="main-content">
@@ -100,7 +106,32 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
+import request from '../../utils/request'
+import api from '../../config/api'
+
+const announcement = ref('')
+
+// 获取首页数据
+const loadHomeData = () => {
+  request({
+    url: api.IndexUrl,
+    method: 'GET'
+  }).then(res => {
+    if (res.errno === 0 && res.data.announcement) {
+      announcement.value = res.data.announcement
+    } else {
+      announcement.value = ''
+    }
+  }).catch(err => {
+    console.error('获取首页数据失败:', err)
+  })
+}
+
+onShow(() => {
+  loadHomeData()
+})
 
 // 点击预订点餐跳转到“点单” tab
 const onOrderTap = () => {

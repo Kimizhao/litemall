@@ -30,6 +30,7 @@ public class SystemConfig {
     public final static String LITEMALL_MALL_QQ = "litemall_mall_qq";
     public final static String LITEMALL_MALL_LONGITUDE = "litemall_mall_longitude";
     public final static String LITEMALL_MALL_Latitude = "litemall_mall_latitude";
+    public final static String LITEMALL_MALL_ANNOUNCEMENT = "litemall_mall_announcement";
 
     //所有的配置均保存在该 HashMap 中
     private static Map<String, String> SYSTEM_CONFIGS = new HashMap<>();
@@ -120,6 +121,10 @@ public class SystemConfig {
 
     public static String getMallLatitude() {
         return getConfig(LITEMALL_MALL_Latitude);
+    }
+
+    public static String getMallAnnouncement() {
+        return getConfig(LITEMALL_MALL_ANNOUNCEMENT);
     }
 
     public static void setConfigs(Map<String, String> configs) {

@@ -22,6 +22,9 @@
       <el-form-item :label="$t('config_mall.form.mall_qq')" prop="litemall_mall_qq">
         <el-input v-model="dataForm.litemall_mall_qq"/>
       </el-form-item>
+      <el-form-item :label="$t('config_mall.form.mall_announcement')" prop="litemall_mall_announcement">
+        <el-input v-model="dataForm.litemall_mall_announcement" type="textarea" :rows="3" placeholder="请输入滚动公告内容"/>
+      </el-form-item>
       <el-form-item>
         <el-button @click="cancel">{{ $t('app.button.cancel') }}</el-button>
         <el-button type="primary" @click="update">{{ $t('app.button.confirm') }}</el-button>
@@ -43,7 +46,8 @@ export default {
         litemall_mall_phone: '',
         litemall_mall_qq: '',
         litemall_mall_longitude: '',
-        litemall_mall_latitude: ''
+        litemall_mall_latitude: '',
+        litemall_mall_announcement: ''
       },
       rules: {
         litemall_mall_name: [

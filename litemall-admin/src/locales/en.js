@@ -917,7 +917,8 @@ export default {
       mall_address: 'Address',
       mall_coordinates: 'Coordinates',
       mall_phone: 'Phone',
-      mall_qq: 'QQ'
+      mall_qq: 'QQ',
+      mall_announcement: 'Announcement'
     },
     placeholder: {
       mall_longitude: 'Longitude',

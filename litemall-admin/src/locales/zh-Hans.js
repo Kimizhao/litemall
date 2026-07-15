@@ -917,7 +917,8 @@ export default {
       mall_address: '商场地址',
       mall_coordinates: '地理坐标',
       mall_phone: '联系电话',
-      mall_qq: '联系QQ'
+      mall_qq: '联系QQ',
+      mall_announcement: '商场公告'
     },
     placeholder: {
       mall_longitude: '经度',
