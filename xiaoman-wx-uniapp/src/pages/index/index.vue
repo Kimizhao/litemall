@@ -119,8 +119,8 @@ const loadHomeData = () => {
     url: api.IndexUrl,
     method: 'GET'
   }).then(res => {
-    if (res.errno === 0 && res.data.announcement) {
-      announcement.value = res.data.announcement
+    if (res && res.announcement) {
+      announcement.value = res.announcement
     } else {
       announcement.value = ''
     }
