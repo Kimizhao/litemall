@@ -42,7 +42,7 @@
           <text>{{ currentCategoryName }}</text>
         </view>
 
-        <view class="goods-item" v-for="item in filteredGoods" :key="item.id">
+        <view class="goods-item" v-for="item in filteredGoods" :key="item.id" @tap="onGoodsTap(item.id)">
           <view class="goods-img-wrapper">
             <image :src="item.picUrl" mode="aspectFill" class="goods-img" />
           </view>
@@ -402,6 +402,13 @@ const onCheckout = () => {
     url: '/pages/checkout/checkout'
   })
 }
+
+// 跳转商品详情页
+const onGoodsTap = (id) => {
+  uni.navigateTo({
+    url: `/pages/goods/goods?id=${id}`
+  })
+}
 </script>
 
 <style scoped>
@@ -597,6 +604,13 @@ const onCheckout = () => {
   margin-bottom: 20rpx;
   box-shadow: 0 4rpx 12rpx rgba(111, 78, 55, 0.04);
   border: 1rpx solid rgba(230, 213, 184, 0.2);
+  transition: all 0.2s ease;
+}
+
+.goods-item:active {
+  opacity: 0.9;
+  background-color: #FAF6EE;
+  transform: scale(0.99);
 }
 
 .goods-img-wrapper {
