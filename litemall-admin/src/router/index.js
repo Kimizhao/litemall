@@ -440,6 +440,16 @@ export const asyncRoutes = [
           title: 'app.menu.sys_os',
           noCache: true
         }
+      },
+      {
+        path: 'printer',
+        component: () => import('@/views/sys/printer'),
+        name: 'printer',
+        meta: {
+          perms: ['GET /admin/printer/list', 'POST /admin/printer/create', 'POST /admin/printer/update', 'POST /admin/printer/delete', 'POST /admin/printer/print-test'],
+          title: 'app.menu.sys_printer',
+          noCache: true
+        }
       }
     ]
   },

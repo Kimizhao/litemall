@@ -42,6 +42,7 @@ export default {
       sys_log: '操作日志',
       sys_role: '角色管理',
       sys_os: '对象存储',
+      sys_printer: '打印机管理',
       config: '配置管理',
       config_mall: '商场配置',
       config_express: '运费配置',
@@ -828,6 +829,25 @@ export default {
     placeholder: {
       filter_username: '请输入管理员名称',
       role_ids: '请选择'
+    }
+  },
+  sys_printer: {
+    table: {
+      id: '打印机ID',
+      sn: '设备编号 (SN)',
+      name: '设备名称',
+      online: '联网状态',
+      status: '设备状态',
+      actions: '操作'
+    },
+    form: {
+      sn: '设备编号 (SN)',
+      pkey: '设备密钥 (Key)',
+      name: '设备名称'
+    },
+    placeholder: {
+      filter_sn: '请输入设备编号 (SN)',
+      filter_name: '请输入设备名称'
     }
   },
   sys_notice: {

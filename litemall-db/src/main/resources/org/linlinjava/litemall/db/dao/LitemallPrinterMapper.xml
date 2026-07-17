@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.linlinjava.litemall.db.dao.LitemallPrinterMapper">
+  <resultMap id="BaseResultMap" type="org.linlinjava.litemall.db.domain.LitemallPrinter">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="sn" jdbcType="VARCHAR" property="sn" />
+    <result column="pkey" jdbcType="VARCHAR" property="pkey" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="online" jdbcType="TINYINT" property="online" />
+    <result column="status" jdbcType="TINYINT" property="status" />
+    <result column="add_time" jdbcType="TIMESTAMP" property="addTime" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="deleted" jdbcType="BIT" property="deleted" />
+  </resultMap>
+
+  <sql id="Base_Column_List">
+    id, sn, pkey, name, `online`, `status`, add_time, update_time, deleted
+  </sql>
+
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from litemall_printer
+    where id = #{id,jdbcType=INTEGER} and deleted = 0
+  </select>
+
+  <update id="logicalDeleteByPrimaryKey" parameterType="java.lang.Integer">
+    update litemall_printer set deleted = 1
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+
+  <insert id="insertSelective" parameterType="org.linlinjava.litemall.db.domain.LitemallPrinter" useGeneratedKeys="true" keyProperty="id">
+    insert into litemall_printer
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        id,
+      </if>
+      <if test="sn != null">
+        sn,
+      </if>
+      <if test="pkey != null">
+        pkey,
+      </if>
+      <if test="name != null">
+        name,
+      </if>
+      <if test="online != null">
+        `online`,
+      </if>
+      <if test="status != null">
+        `status`,
+      </if>
+      <if test="addTime != null">
+        add_time,
+      </if>
+      <if test="updateTime != null">
+        update_time,
+      </if>
+      <if test="deleted != null">
+        deleted,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="sn != null">
+        #{sn,jdbcType=VARCHAR},
+      </if>
+      <if test="pkey != null">
+        #{pkey,jdbcType=VARCHAR},
+      </if>
+      <if test="name != null">
+        #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="online != null">
+        #{online,jdbcType=TINYINT},
+      </if>
+      <if test="status != null">
+        #{status,jdbcType=TINYINT},
+      </if>
+      <if test="addTime != null">
+        #{addTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null">
+        #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="deleted != null">
+        #{deleted,jdbcType=BIT},
+      </if>
+    </trim>
+  </insert>
+
+  <update id="updateByPrimaryKeySelective" parameterType="org.linlinjava.litemall.db.domain.LitemallPrinter">
+    update litemall_printer
+    <set>
+      <if test="sn != null">
+        sn = #{sn,jdbcType=VARCHAR},
+      </if>
+      <if test="pkey != null">
+        pkey = #{pkey,jdbcType=VARCHAR},
+      </if>
+      <if test="name != null">
+        name = #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="online != null">
+        `online` = #{online,jdbcType=TINYINT},
+      </if>
+      <if test="status != null">
+        `status` = #{status,jdbcType=TINYINT},
+      </if>
+      <if test="addTime != null">
+        add_time = #{addTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null">
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="deleted != null">
+        deleted = #{deleted,jdbcType=BIT},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+
+  <select id="selectSelective" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from litemall_printer
+    where deleted = 0
+    <if test="sn != null and sn != ''">
+      and sn like concat('%', #{sn}, '%')
+    </if>
+    <if test="name != null and name != ''">
+      and name like concat('%', #{name}, '%')
+    </if>
+  </select>
+</mapper>

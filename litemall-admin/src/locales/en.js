@@ -42,6 +42,7 @@ export default {
       sys_log: 'Logs',
       sys_role: 'Roles',
       sys_os: 'Storage',
+      sys_printer: 'Printers',
       config: 'Configuration',
       config_mall: 'Mall config',
       config_express: 'Freight config',
@@ -828,6 +829,25 @@ export default {
     placeholder: {
       filter_username: 'Username',
       role_ids: 'Please choose'
+    }
+  },
+  sys_printer: {
+    table: {
+      id: 'ID',
+      sn: 'Device SN',
+      name: 'Device Name',
+      online: 'Online',
+      status: 'Status',
+      actions: 'Actions'
+    },
+    form: {
+      sn: 'Device SN',
+      pkey: 'Device Key',
+      name: 'Device Name'
+    },
+    placeholder: {
+      filter_sn: 'Enter device SN',
+      filter_name: 'Enter device name'
     }
   },
   sys_notice: {

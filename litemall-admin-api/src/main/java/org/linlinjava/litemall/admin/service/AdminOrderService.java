@@ -54,6 +54,8 @@ public class AdminOrderService {
     private LogHelper logHelper;
     @Autowired
     private LitemallCouponUserService couponUserService;
+    @Autowired
+    private org.linlinjava.litemall.core.printer.LitemallPrinterClient printerClient;
 
     public Object list(String nickname, String consignee, String orderSn, LocalDateTime start, LocalDateTime end, List<Short> orderStatusArray,
                        Integer page, Integer limit, String sort, String order) {
@@ -311,6 +313,14 @@ public class AdminOrderService {
         order.setOrderStatus(OrderUtil.STATUS_PAY);
         if (orderService.updateWithOptimisticLocker(order) == 0) {
             return WxPayNotifyResponse.fail("更新数据已失效");
+        }
+
+        // 联动打印机自动打印订单
+        try {
+            List<LitemallOrderGoods> orderGoods = orderGoodsService.queryByOid(order.getId());
+            printerClient.printOrder(order, orderGoods);
+        } catch (Exception e) {
+            logger.error("订单付款成功自动打印异常: " + e.getMessage(), e);
         }
 
         return ResponseUtil.ok();

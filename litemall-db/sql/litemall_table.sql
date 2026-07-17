@@ -824,6 +824,28 @@ CREATE TABLE `litemall_user` (
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
+--
+-- Table structure for table `litemall_printer`
+--
+
+DROP TABLE IF EXISTS `litemall_printer`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `litemall_printer` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `sn` varchar(63) NOT NULL COMMENT '打印机编号sn',
+  `pkey` varchar(63) NOT NULL DEFAULT '' COMMENT '打印机密钥pkey',
+  `name` varchar(63) NOT NULL COMMENT '打印机名称',
+  `online` tinyint(1) DEFAULT '0' COMMENT '联网状态（0：离线，1：在线）',
+  `status` tinyint(1) DEFAULT '0' COMMENT '状态（0：正常，1：异常）',
+  `add_time` datetime DEFAULT NULL COMMENT '添加时间',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  `deleted` tinyint(1) DEFAULT '0' COMMENT '逻辑删除',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `sn_unique` (`sn`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='打印机设备表';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

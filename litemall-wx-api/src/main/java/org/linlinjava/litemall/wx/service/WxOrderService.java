@@ -107,6 +107,8 @@ public class WxOrderService {
     private TaskService taskService;
     @Autowired
     private LitemallAftersaleService aftersaleService;
+    @Autowired
+    private org.linlinjava.litemall.core.printer.LitemallPrinterClient printerClient;
 
     /**
      * 订单列表
@@ -515,6 +517,14 @@ public class WxOrderService {
             notifyService.notifyMail("新订单通知", order.toString());
             // 这里微信的短信平台对参数长度有限制，所以将订单号只截取后6位
             notifyService.notifySmsTemplateSync(order.getMobile(), NotifyType.PAY_SUCCEED, new String[]{order.getOrderSn().substring(8, 14)});
+
+            // 联动打印机自动打印订单
+            try {
+                List<LitemallOrderGoods> orderGoods = orderGoodsService.queryByOid(orderId);
+                printerClient.printOrder(order, orderGoods);
+            } catch (Exception e) {
+                logger.error("零元订单自动打印异常: " + e.getMessage(), e);
+            }
         }
         else {
             // 订单支付超期任务
@@ -818,6 +828,14 @@ public class WxOrderService {
 
         // 取消订单超时未支付任务
         taskService.removeTask(new OrderUnpaidTask(order.getId()));
+
+        // 联动打印机自动打印订单
+        try {
+            List<LitemallOrderGoods> orderGoods = orderGoodsService.queryByOid(order.getId());
+            printerClient.printOrder(order, orderGoods);
+        } catch (Exception e) {
+            logger.error("腾讯回调订单支付成功自动打印异常: " + e.getMessage(), e);
+        }
 
         return WxPayNotifyResponse.success("处理成功!");
     }
