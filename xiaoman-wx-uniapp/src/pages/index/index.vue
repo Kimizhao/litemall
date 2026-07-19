@@ -2,7 +2,10 @@
   <view class="container">
     <!-- 1. 顶部店铺卡片区域 -->
     <view class="shop-header">
-      <view class="shop-header-bg"></view>
+      <view class="shop-header-bg">
+        <image :src="shopHeaderBg" class="shop-header-bg-img" mode="widthFix"></image>
+      </view>
+      <view class="shop-header-bg-overlay"></view>
       <view class="shop-header-content">
         <!-- <view class="shop-avatar">满</view> -->
         <view class="shop-info">
@@ -24,7 +27,7 @@
     <view class="main-content">
       <!-- 3.1 预订点餐大按钮卡片 -->
       <view class="order-hero-card" @tap="onOrderTap">
-        <view class="order-hero-bg"></view>
+        <image :src="sandwichBg" class="order-hero-bg" mode="aspectFill"></image>
         <view class="order-hero-overlay"></view>
         <view class="order-hero-content">
           <text class="order-hero-title">预订点餐</text>
@@ -48,7 +51,7 @@
           <text class="info-icon">📍</text>
           <div class="info-text-wrap">
             <!-- <text class="info-label">导航地址</text> -->
-            <text class="info-value text-link">福州市仓山区公园路43号小满食光</text>
+            <text class="info-value text-link">{{ address }}</text>
           </div>
           <text class="arrow-right">›</text>
         </view>
@@ -57,7 +60,7 @@
           <text class="info-icon">📞</text>
           <div class="info-text-wrap">
             <!-- <text class="info-label">联系电话</text> -->
-            <text class="info-value text-link">182-5903-3410</text>
+            <text class="info-value text-link">{{ phone }}</text>
           </div>
           <view class="btn-call">呼叫</view>
         </view>
@@ -71,7 +74,7 @@
             <text class="owner-desc">扫码或长按保存二维码添加。</text>
           </view>
           <view class="owner-qr-wrapper" @tap="onPreviewQR">
-            <image src="/static/xiaoman/contact_qr.png?v=20260714_cropped" :show-menu-by-longpress="true" mode="aspectFit" class="owner-qr-img" />
+            <image :src="contactQr" :show-menu-by-longpress="true" mode="aspectFit" class="owner-qr-img" />
           </view>
         </view>
       </view>
@@ -109,9 +112,17 @@
 import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import request from '../../utils/request'
-import api from '../../config/api'
+import api, { WxApiHost } from '../../config/api'
+
+const shopHeaderBg = `/static/xiaoman/shop_header.jpg`
+const contactQr = `/static/xiaoman/contact_qr.png`
+const sandwichBg = '/static/xiaoman/sandwich_4.jpg'
 
 const announcement = ref('')
+const address = ref('福州市仓山区公园路43号小满食光')
+const phone = ref('182-5903-3410')
+const latitude = ref(26.0438)
+const longitude = ref(119.3144)
 
 // 获取首页数据
 const loadHomeData = () => {
@@ -119,10 +130,24 @@ const loadHomeData = () => {
     url: api.IndexUrl,
     method: 'GET'
   }).then(res => {
-    if (res && res.announcement) {
-      announcement.value = res.announcement
-    } else {
-      announcement.value = ''
+    if (res) {
+      if (res.announcement) {
+        announcement.value = res.announcement
+      } else {
+        announcement.value = ''
+      }
+      if (res.mallAddress) {
+        address.value = res.mallAddress
+      }
+      if (res.mallPhone) {
+        phone.value = res.mallPhone
+      }
+      if (res.mallLatitude) {
+        latitude.value = Number(res.mallLatitude)
+      }
+      if (res.mallLongitude) {
+        longitude.value = Number(res.mallLongitude)
+      }
     }
   }).catch(err => {
     console.error('获取首页数据失败:', err)
@@ -143,14 +168,14 @@ const onOrderTap = () => {
 // 拨打门店电话
 const onMakeCall = () => {
   uni.makePhoneCall({
-    phoneNumber: '13800000000'
+    phoneNumber: phone.value
   })
 }
 
 // 地址点击导航并复制
 const onAddressTap = () => {
   uni.setClipboardData({
-    data: '福州市仓山区公园路43号小满食光',
+    data: address.value,
     showToast: false,
     success: () => {
       // Show copy success toast immediately
@@ -161,31 +186,31 @@ const onAddressTap = () => {
       });
       
       // Delay map opening by 1 second to allow toast visibility
-      // setTimeout(() => {
-      //   // #ifdef H5
-      //   window.location.href = 'https://apis.map.qq.com/uri/v1/marker?marker=coord:26.0438,119.3144;title:小满食光;addr:福州市仓山区公园路43号&referer=litemall';
-      //   // #endif
+      setTimeout(() => {
+        // #ifdef H5
+        window.location.href = `https://apis.map.qq.com/uri/v1/marker?marker=coord:${latitude.value},${longitude.value};title:小满食光;addr:${address.value}&referer=litemall`;
+        // #endif
         
-      //   // #ifndef H5
-      //   uni.openLocation({
-      //     latitude: 26.0438,
-      //     longitude: 119.3144,
-      //     name: '小满食光',
-      //     address: '福州市仓山区公园路43号',
-      //     scale: 18,
-      //     success: () => {
-      //       console.log('Location opened successfully');
-      //     },
-      //     fail: (err) => {
-      //       console.error('Failed to open location:', err);
-      //       uni.showToast({
-      //         title: '已复制地址，期待您的光临！',
-      //         icon: 'none'
-      //       });
-      //     }
-      //   });
-      //   // #endif
-      // }, 1000);
+        // #ifndef H5
+        uni.openLocation({
+          latitude: latitude.value,
+          longitude: longitude.value,
+          name: '小满食光',
+          address: address.value,
+          scale: 18,
+          success: () => {
+            console.log('Location opened successfully');
+          },
+          fail: (err) => {
+            console.error('Failed to open location:', err);
+            uni.showToast({
+              title: '已复制地址，期待您的光临！',
+              icon: 'none'
+            });
+          }
+        });
+        // #endif
+      }, 1000);
     }
   });
 }
@@ -193,8 +218,8 @@ const onAddressTap = () => {
 // 预览主理人微信二维码（支持长按识别）
 const onPreviewQR = () => {
   uni.previewImage({
-    urls: ['/static/xiaoman/contact_qr.png?v=20260714_cropped'],
-    current: '/static/xiaoman/contact_qr.png?v=20260714_cropped'
+    urls: [contactQr],
+    current: contactQr
   })
 }
 </script>
@@ -224,11 +249,23 @@ const onPreviewQR = () => {
   left: 0;
   width: 100%;
   height: 100%;
-  background-image: linear-gradient(to bottom, rgba(74, 53, 37, 0.1), rgba(74, 53, 37, 0.8)), 
-                    url('/static/xiaoman/shop_header.jpg');
-  background-size: cover;
-  background-position: center top;
+  overflow: hidden;
   z-index: 1;
+}
+
+.shop-header-bg-img {
+  width: 100%;
+  display: block;
+}
+
+.shop-header-bg-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(74, 53, 37, 0.1), rgba(74, 53, 37, 0.8));
+  z-index: 2;
 }
 
 .shop-header-content {
@@ -236,7 +273,7 @@ const onPreviewQR = () => {
   display: flex;
   align-items: center;
   gap: 24rpx;
-  z-index: 2;
+  z-index: 3;
   color: #FFFFFF;
 }
 
@@ -332,9 +369,6 @@ const onPreviewQR = () => {
   left: 0;
   width: 100%;
   height: 100%;
-  background-image: url('/static/xiaoman/sandwich_4.jpg');
-  background-size: cover;
-  background-position: center;
   z-index: 1;
 }
 

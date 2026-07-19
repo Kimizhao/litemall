@@ -1,11 +1,18 @@
-// Litemall Spring Boot Backend API Endpoints for local container
 // #ifdef H5
-const WxApiRoot = window.location.origin + '/wx/'
+export const WxApiRoot = window.location.origin + '/wx/'
 // #endif
 
 // #ifndef H5
-const WxApiRoot = 'http://localhost:8080/wx/'
+export const WxApiRoot = 'https://xiaoman.zhaozhihong.com/wx/'
 // #endif
+
+const getBaseHost = (root) => {
+  if (!root) return ''
+  const match = root.match(/^https?:\/\/[^\/]+/)
+  return match ? match[0] : ''
+}
+
+export const WxApiHost = getBaseHost(WxApiRoot)
 
 export default {
   IndexUrl: WxApiRoot + 'home/index',               // 首页数据接口
@@ -22,6 +29,11 @@ export default {
   AuthReset: WxApiRoot + 'auth/reset',              // 账号密码重置
   AuthRegisterCaptcha: WxApiRoot + 'auth/regCaptcha', // 验证码
   AuthBindPhone: WxApiRoot + 'auth/bindPhone',      // 绑定微信手机号
+  AuthInfo: WxApiRoot + 'auth/info',                // 获取用户信息
+  AuthWeixinSilentLogin: WxApiRoot + 'auth/weixin_silent_login', // 微信静默登录
+  AuthWeixinPhoneLogin: WxApiRoot + 'auth/weixin_phone_login',   // 微信手机号一键登录/注册
+  AuthLoginBySms: WxApiRoot + 'auth/login_by_sms',               // 手机短信登录
+  AuthProfile: WxApiRoot + 'auth/profile',                       // 修改个人资料 (头像/昵称)
 
   GoodsCount: WxApiRoot + 'goods/count',            // 统计商品总数
   GoodsList: WxApiRoot + 'goods/list',              // 获得商品列表

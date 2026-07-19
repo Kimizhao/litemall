@@ -285,6 +285,22 @@
         "navigationBarBackgroundColor": "#ffffff",
         "navigationBarTextStyle": "black"
       }
+    },
+    {
+      "path": "pages/auth/doc",
+      "style": {
+        "navigationBarTitleText": "协议文档",
+        "navigationBarBackgroundColor": "#ffffff",
+        "navigationBarTextStyle": "black"
+      }
+    },
+    {
+      "path": "pages/ucenter/settings/settings",
+      "style": {
+        "navigationBarTitleText": "账号与设置",
+        "navigationBarBackgroundColor": "#ffffff",
+        "navigationBarTextStyle": "black"
+      }
     }
   ],
   "globalStyle": {
@@ -312,8 +328,8 @@
         "selectedIconPath": "static/tabbar/catalog-active.png"
       },
       {
-        "pagePath": "pages/ucenter/order/order",
-        "text": "订单",
+        "pagePath": "pages/cart/cart",
+        "text": "购物车",
         "iconPath": "static/tabbar/cart.png",
         "selectedIconPath": "static/tabbar/cart-active.png"
       },

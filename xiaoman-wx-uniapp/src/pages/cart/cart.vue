@@ -1,85 +1,96 @@
 <template>
   <view class="container">
     <!-- Non-logged in state -->
-    <view class="login-prompt" v-if="!hasLogin">
-      <text class="prompt-icon">🔒</text>
-      <text class="prompt-title">您尚未登录账号</text>
-      <text class="prompt-desc">登录后即可同步和结账购物车中的精选商品</text>
-      <button class="login-btn" @tap="onGoLogin">立即登录</button>
+    <view class="no-login" v-if="!hasLogin">
+      <view class="c">
+        <text class="prompt-text">还没有登录</text>
+        <button class="login-btn" @tap="onGoLogin">去登录</button>
+      </view>
     </view>
 
     <!-- Logged in state -->
-    <view class="cart-workspace" v-else>
-      <!-- Scrollable list of items -->
-      <scroll-view scroll-y class="cart-scroll" v-if="cartList.length > 0">
-        <view class="cart-list">
-          <view class="cart-row glass-panel" v-for="item in cartList" :key="item.id">
-            <!-- Checkbox selector -->
-            <view class="check-box-cell" @tap="onCheckToggle(item)">
-              <view class="custom-checkbox" :class="{ checked: item.checked }">
-                <text class="check-mark" v-if="item.checked">✓</text>
-              </view>
-            </view>
-
-            <!-- Product Card Info -->
-            <image :src="item.picUrl" mode="aspectFill" class="product-image" />
-            <view class="product-details">
-              <view class="title-row">
-                <text class="product-name">{{ item.goodsName }}</text>
-                <text class="delete-icon" @tap="onDeleteRow(item)">🗑️</text>
-              </view>
-              <text class="product-spec">{{ item.specifications.join(' ') }}</text>
-              
-              <view class="action-row">
-                <view class="price-wrap">
-                  <text class="price-symbol">¥</text>
-                  <text class="price-val">{{ item.price }}</text>
-                </view>
-                <!-- Number adjuster -->
-                <view class="quantity-adjuster">
-                  <view class="adjust-btn btn-minus" @tap="onQuantityChange(item, -1)">-</view>
-                  <input type="number" class="qty-input" v-model="item.number" disabled />
-                  <view class="adjust-btn btn-plus" @tap="onQuantityChange(item, 1)">+</view>
-                </view>
-              </view>
-            </view>
-          </view>
+    <view class="login-workspace" v-else>
+      <!-- Empty cart state -->
+      <view class="no-cart" v-if="cartList.length === 0 && !loading">
+        <view class="c">
+          <text class="empty-title">空空如也~</text>
+          <text class="empty-desc">去添加点什么吧</text>
         </view>
-        <view class="footer-spacer"></view>
-      </scroll-view>
-
-      <!-- Empty State -->
-      <view class="empty-cart" v-else-if="!loading">
-        <text class="empty-icon">🛒</text>
-        <text class="empty-title">购物车空空如也</text>
-        <text class="empty-desc">赶紧去挑选几件心仪的手作美物吧</text>
-        <button class="shop-btn" @tap="onGoShopping">去逛逛</button>
       </view>
 
-      <!-- Loading State -->
-      <view class="loading-cart" v-else>
-        <text class="loading-icon">⏳</text>
-        <text class="loading-text">正在同步购物车...</text>
-      </view>
+      <!-- Cart view -->
+      <view class="cart-view" v-else>
+        <scroll-view scroll-y class="cart-scroll">
+          <view class="list">
+            <view class="group-item">
+              <view class="goods">
+                <view class="item" :class="{ edit: isEditCart }" v-for="(item, index) in cartList" :key="item.id">
+                  <!-- Checkbox selector -->
+                  <view class="checkbox-cell" @tap="onCheckToggle(item, index)">
+                    <view class="custom-checkbox" :class="{ checked: item.checked }">
+                      <text class="check-mark" v-if="item.checked">✓</text>
+                    </view>
+                  </view>
 
-      <!-- Sticky Footer Checkout Panel -->
-      <view class="checkout-footer glass-panel" v-if="cartList.length > 0">
-        <view class="select-all-wrap" @tap="onCheckAllToggle">
-          <view class="custom-checkbox" :class="{ checked: isAllChecked }">
-            <text class="check-mark" v-if="isAllChecked">✓</text>
-          </view>
-          <text class="select-label">全选</text>
-        </view>
+                  <!-- Product Card Details -->
+                  <view class="cart-goods">
+                    <image :src="item.picUrl" mode="aspectFill" class="img" />
+                    <view class="info">
+                      <!-- Normal Mode -->
+                      <block v-if="!isEditCart">
+                        <view class="t">
+                          <text class="name">{{ item.goodsName }}</text>
+                          <text class="num">x{{ item.number }}</text>
+                        </view>
+                        <view class="attr">{{ item.specifications ? item.specifications.join(' ') : '' }}</view>
+                        <view class="b">
+                          <text class="price">￥{{ item.price }}</text>
+                        </view>
+                      </block>
 
-        <view class="checkout-info">
-          <view class="price-row">
-            <text class="total-label">合计：</text>
-            <text class="total-price-symbol">¥</text>
-            <text class="total-price-val">{{ cartTotal.checkedGoodsAmount }}</text>
+                      <!-- Edit Mode -->
+                      <block v-else>
+                        <view class="attr">已选择: {{ item.specifications ? item.specifications.join(' ') : '' }}</view>
+                        <view class="b">
+                          <text class="price">￥{{ item.price }}</text>
+                          <view class="selnum">
+                            <view class="cut" @tap="onQuantityChange(item, index, -1)">-</view>
+                            <input type="number" class="number" :value="item.number" disabled />
+                            <view class="add" @tap="onQuantityChange(item, index, 1)">+</view>
+                          </view>
+                        </view>
+                      </block>
+                    </view>
+                  </view>
+                </view>
+              </view>
+            </view>
           </view>
-          <button class="checkout-btn" @tap="onCheckout">
-            结算 ({{ cartTotal.checkedGoodsCount }})
-          </button>
+          <view class="footer-spacer"></view>
+        </scroll-view>
+
+        <!-- Sticky Bottom Bar -->
+        <view class="cart-bottom">
+          <view class="select-all-wrap" @tap="onCheckAllToggle">
+            <view class="custom-checkbox" :class="{ checked: isAllChecked }">
+              <text class="check-mark" v-if="isAllChecked">✓</text>
+            </view>
+            <text class="select-label">全选（{{ cartTotal.checkedGoodsCount }}）</text>
+          </view>
+
+          <view class="total" v-if="!isEditCart">￥{{ cartTotal.checkedGoodsAmount }}</view>
+          
+          <view class="action_btn_area">
+            <view class="action-btn" :class="isEditCart ? 'sure' : 'edit'" @tap="onEditToggle">
+              {{ isEditCart ? '完成' : '编辑' }}
+            </view>
+            <view class="action-btn delete" @tap="onDeleteCart" v-if="isEditCart">
+              删除({{ cartTotal.checkedGoodsCount }})
+            </view>
+            <view class="action-btn checkout" @tap="onCheckout" v-else>
+              下单
+            </view>
+          </view>
         </view>
       </view>
     </view>
@@ -96,12 +107,15 @@ import api from '../../config/api'
 const hasLogin = ref(false)
 const cartList = ref([])
 const cartTotal = ref({
+  goodsCount: 0,
+  goodsAmount: 0.00,
   checkedGoodsCount: 0,
   checkedGoodsAmount: 0.00
 })
 const loading = ref(false)
 
-// Select all helper state
+// Edit mode and select all helper states
+const isEditCart = ref(false)
 const isAllChecked = ref(false)
 
 const getCartData = async () => {
@@ -114,9 +128,7 @@ const getCartData = async () => {
     })
     if (data) {
       cartList.value = data.cartList || []
-      cartTotal.value = data.cartTotal || { checkedGoodsCount: 0, checkedGoodsAmount: 0.00 }
-      
-      // Update select all state
+      cartTotal.value = data.cartTotal || { goodsCount: 0, goodsAmount: 0.00, checkedGoodsCount: 0, checkedGoodsAmount: 0.00 }
       isAllChecked.value = cartList.value.length > 0 && cartList.value.every(item => item.checked)
     }
   } catch (err) {
@@ -131,11 +143,13 @@ onShow(() => {
   const token = uni.getStorageSync('token')
   if (token) {
     hasLogin.value = true
+    isEditCart.value = false // reset edit mode when show
     getCartData()
   } else {
     hasLogin.value = false
     cartList.value = []
-    cartTotal.value = { checkedGoodsCount: 0, checkedGoodsAmount: 0.00 }
+    cartTotal.value = { goodsCount: 0, goodsAmount: 0.00, checkedGoodsCount: 0, checkedGoodsAmount: 0.00 }
+    isEditCart.value = false
   }
 })
 
@@ -145,30 +159,40 @@ const onGoLogin = () => {
   })
 }
 
-const onGoShopping = () => {
-  uni.switchTab({
-    url: '/pages/index/index'
-  })
-}
-
 // Toggle individual check status
-const onCheckToggle = async (item) => {
-  try {
-    const data = await request({
-      url: api.CartChecked,
-      method: 'POST',
-      data: {
-        productIds: [item.productId],
-        isChecked: item.checked ? 0 : 1
+const onCheckToggle = async (item, index) => {
+  if (!isEditCart.value) {
+    // Normal mode: Sync directly with server
+    try {
+      const data = await request({
+        url: api.CartChecked,
+        method: 'POST',
+        data: {
+          productIds: [item.productId],
+          isChecked: item.checked ? 0 : 1
+        }
+      })
+      if (data) {
+        cartList.value = data.cartList || []
+        cartTotal.value = data.cartTotal || { goodsCount: 0, goodsAmount: 0.00, checkedGoodsCount: 0, checkedGoodsAmount: 0.00 }
+        isAllChecked.value = cartList.value.length > 0 && cartList.value.every(item => item.checked)
+      }
+    } catch (err) {
+      console.error('Failed to toggle check status:', err)
+    }
+  } else {
+    // Edit mode: Local selection change
+    cartList.value[index].checked = !cartList.value[index].checked
+    isAllChecked.value = cartList.value.length > 0 && cartList.value.every(item => item.checked)
+    
+    // Update local total checked count
+    let count = 0
+    cartList.value.forEach(v => {
+      if (v.checked) {
+        count += v.number
       }
     })
-    if (data) {
-      cartList.value = data.cartList || []
-      cartTotal.value = data.cartTotal || { checkedGoodsCount: 0, checkedGoodsAmount: 0.00 }
-      isAllChecked.value = cartList.value.length > 0 && cartList.value.every(item => item.checked)
-    }
-  } catch (err) {
-    console.error('Failed to toggle check status:', err)
+    cartTotal.value.checkedGoodsCount = count
   }
 }
 
@@ -178,29 +202,61 @@ const onCheckAllToggle = async () => {
   const nextChecked = !isAllChecked.value
   const productIds = cartList.value.map(item => item.productId)
   
-  try {
-    const data = await request({
-      url: api.CartChecked,
-      method: 'POST',
-      data: {
-        productIds: productIds,
-        isChecked: nextChecked ? 1 : 0
+  if (!isEditCart.value) {
+    // Normal mode: Sync directly with server
+    try {
+      const data = await request({
+        url: api.CartChecked,
+        method: 'POST',
+        data: {
+          productIds: productIds,
+          isChecked: nextChecked ? 1 : 0
+        }
+      })
+      if (data) {
+        cartList.value = data.cartList || []
+        cartTotal.value = data.cartTotal || { goodsCount: 0, goodsAmount: 0.00, checkedGoodsCount: 0, checkedGoodsAmount: 0.00 }
+        isAllChecked.value = nextChecked
+      }
+    } catch (err) {
+      console.error('Failed to toggle select all status:', err)
+    }
+  } else {
+    // Edit mode: Local selection change for all
+    cartList.value = cartList.value.map(item => {
+      item.checked = nextChecked
+      return item
+    })
+    isAllChecked.value = nextChecked
+    
+    // Update local total checked count
+    let count = 0
+    cartList.value.forEach(v => {
+      if (v.checked) {
+        count += v.number
       }
     })
-    if (data) {
-      cartList.value = data.cartList || []
-      cartTotal.value = data.cartTotal || { checkedGoodsCount: 0, checkedGoodsAmount: 0.00 }
-      isAllChecked.value = nextChecked
-    }
-  } catch (err) {
-    console.error('Failed to toggle select all status:', err)
+    cartTotal.value.checkedGoodsCount = count
   }
 }
 
 // Adjust quantity
-const onQuantityChange = async (item, diff) => {
+const onQuantityChange = async (item, index, diff) => {
   const nextNum = item.number + diff
   if (nextNum < 1) return
+  
+  // Local preview change
+  cartList.value[index].number = nextNum
+  
+  if (isEditCart.value) {
+    let count = 0
+    cartList.value.forEach(v => {
+      if (v.checked) {
+        count += v.number
+      }
+    })
+    cartTotal.value.checkedGoodsCount = count
+  }
   
   try {
     const data = await request({
@@ -213,22 +269,45 @@ const onQuantityChange = async (item, diff) => {
         productId: item.productId
       }
     })
-    if (data) {
+    
+    // If not editing, sync standard response
+    if (!isEditCart.value && data) {
       cartList.value = data.cartList || []
-      cartTotal.value = data.cartTotal || { checkedGoodsCount: 0, checkedGoodsAmount: 0.00 }
+      cartTotal.value = data.cartTotal || { goodsCount: 0, goodsAmount: 0.00, checkedGoodsCount: 0, checkedGoodsAmount: 0.00 }
     }
   } catch (err) {
-    console.error('Failed to update product quantity:', err)
+    console.error('Failed to update quantity:', err)
   }
 }
 
-// Delete item
-const onDeleteRow = (item) => {
+// Toggle edit/complete mode
+const onEditToggle = () => {
+  if (isEditCart.value) {
+    // Save/complete mode -> re-fetch checked statuses from server
+    isEditCart.value = false
+    getCartData()
+  } else {
+    // Enter edit mode -> locally uncheck all items
+    isEditCart.value = true
+    cartList.value = cartList.value.map(item => {
+      item.checked = false
+      return item
+    })
+    isAllChecked.value = false
+    cartTotal.value.checkedGoodsCount = 0
+  }
+}
+
+// Delete checked items batch
+const onDeleteCart = async () => {
+  const checkedItems = cartList.value.filter(item => item.checked)
+  if (checkedItems.length === 0) return
+  
+  const productIds = checkedItems.map(item => item.productId)
+  
   uni.showModal({
-    title: '删除宝贝',
-    content: '您确定要从购物车中删除该手作物吗？',
-    confirmText: '删除',
-    cancelText: '取消',
+    title: '提示',
+    content: '确定要删除选中的商品吗？',
     confirmColor: '#E07A5F',
     success: async (res) => {
       if (res.confirm) {
@@ -237,20 +316,24 @@ const onDeleteRow = (item) => {
             url: api.CartDelete,
             method: 'POST',
             data: {
-              productIds: [item.productId]
+              productIds: productIds
             }
           })
           if (data) {
-            cartList.value = data.cartList || []
-            cartTotal.value = data.cartTotal || { checkedGoodsCount: 0, checkedGoodsAmount: 0.00 }
-            isAllChecked.value = cartList.value.length > 0 && cartList.value.every(item => item.checked)
+            // Uncheck all remaining items to match litemall-wx behavior
+            cartList.value = (data.cartList || []).map(v => {
+              v.checked = false
+              return v
+            })
+            cartTotal.value = data.cartTotal || { goodsCount: 0, goodsAmount: 0.00, checkedGoodsCount: 0, checkedGoodsAmount: 0.00 }
+            isAllChecked.value = false
             uni.showToast({
-              title: '已删除宝贝',
+              title: '已删除商品',
               icon: 'success'
             })
           }
         } catch (err) {
-          console.error('Failed to delete cart item:', err)
+          console.error('Failed to delete cart items:', err)
         }
       }
     }
@@ -260,15 +343,20 @@ const onDeleteRow = (item) => {
 const onCheckout = () => {
   if (cartTotal.value.checkedGoodsCount === 0) {
     uni.showToast({
-      title: '您尚未勾选商品呢',
+      title: '请勾选需要结算的商品',
       icon: 'none'
     })
     return
   }
-  uni.showToast({
-    title: '正在前往结算收银台...',
-    icon: 'none'
-  })
+  
+  try {
+    uni.setStorageSync('cartId', 0)
+    uni.navigateTo({
+      url: '/pages/checkout/checkout'
+    })
+  } catch (e) {
+    console.error('Checkout redirect error:', e)
+  }
 }
 </script>
 
@@ -280,8 +368,8 @@ const onCheckout = () => {
   flex-direction: column;
 }
 
-/* Prompt for not logged in */
-.login-prompt {
+/* Unlogged in state view */
+.no-login {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -289,77 +377,124 @@ const onCheckout = () => {
   flex: 1;
   padding: 0 64rpx;
   box-sizing: border-box;
-  margin-top: 180rpx;
 }
 
-.prompt-icon {
-  font-size: 100rpx;
-  margin-bottom: 24rpx;
+.no-login .c {
+  width: 100%;
+  margin-top: 360rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40rpx;
 }
 
-.prompt-title {
+.prompt-text {
   font-size: 34rpx;
-  font-weight: 800;
-  color: var(--text-main);
-  margin-bottom: 12rpx;
-}
-
-.prompt-desc {
-  font-size: 24rpx;
   color: var(--text-muted);
+  font-weight: 700;
   text-align: center;
-  line-height: 1.5;
-  margin-bottom: 52rpx;
 }
 
 .login-btn {
-  width: 280rpx;
-  height: 84rpx;
-  border-radius: 42rpx;
-  background: var(--primary-gradient);
+  width: 90%;
+  height: 96rpx;
+  border-radius: 48rpx;
+  background-color: #A18276; /* Muted theme gray-brown */
   color: #ffffff;
-  font-size: 28rpx;
+  font-size: 30rpx;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.2);
+  letter-spacing: 2rpx;
 }
 
 .login-btn:active {
   opacity: 0.85;
 }
 
-/* Cart Workspace */
-.cart-workspace {
+/* Logged in workspace */
+.login-workspace {
   display: flex;
   flex-direction: column;
   flex: 1;
 }
 
-.cart-scroll {
+/* Empty cart state */
+.no-cart {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   flex: 1;
 }
 
-.cart-list {
+.no-cart .c {
+  width: 100%;
+  margin-top: 360rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.empty-title {
+  font-size: 32rpx;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.empty-desc {
+  font-size: 26rpx;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+/* Cart list container */
+.cart-view {
+  width: 100%;
+  height: auto;
+  overflow: hidden;
+}
+
+.cart-scroll {
+  width: 100%;
+  flex: 1;
+}
+
+.cart-view .list {
+  height: auto;
+  width: 100%;
+  overflow: hidden;
+}
+
+.cart-view .group-item {
+  height: auto;
+  width: 100%;
+  margin-bottom: 18rpx;
+}
+
+.cart-view .goods {
   padding: 32rpx;
   display: flex;
   flex-direction: column;
   gap: 24rpx;
 }
 
-.cart-row {
+.cart-view .item {
   display: flex;
   align-items: center;
   padding: 24rpx;
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
+  background-color: #ffffff;
   border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+  box-sizing: border-box;
 }
 
-/* Custom Checkbox */
-.check-box-cell {
-  padding: 20rpx 16rpx 20rpx 0;
+/* Checkbox alignment */
+.checkbox-cell {
+  padding: 20rpx 20rpx 20rpx 0;
 }
 
 .custom-checkbox {
@@ -386,29 +521,36 @@ const onCheckout = () => {
   font-weight: bold;
 }
 
-/* Product Info */
-.product-image {
-  width: 140rpx;
-  height: 140rpx;
-  border-radius: var(--radius-sm);
-  background: #FAF6EE;
-  margin-right: 20rpx;
+/* Product Row info */
+.cart-goods {
+  flex: 1;
+  display: flex;
+  align-items: center;
 }
 
-.product-details {
+.cart-view .item .img {
+  width: 130rpx;
+  height: 130rpx;
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-primary);
+  margin-right: 24rpx;
+}
+
+.cart-view .item .info {
   flex: 1;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
+  height: 130rpx;
 }
 
-.title-row {
+.cart-view .item .t {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 4rpx;
 }
 
-.product-name {
+.cart-view .item .name {
   font-size: 26rpx;
   font-weight: 700;
   color: var(--text-main);
@@ -417,162 +559,116 @@ const onCheckout = () => {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  flex: 1;
-  padding-right: 16rpx;
+  max-width: 320rpx;
 }
 
-.delete-icon {
-  font-size: 30rpx;
-  padding: 4rpx 10rpx;
+.cart-view .item .num {
+  font-size: 24rpx;
+  color: var(--text-muted);
+  font-weight: 700;
 }
 
-.product-spec {
+.cart-view .item .attr {
   font-size: 22rpx;
   color: var(--text-muted);
-  font-weight: 500;
-  margin-bottom: 12rpx;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.action-row {
+.cart-view .item .b {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.price-wrap {
-  display: flex;
-  align-items: baseline;
-}
-
-.price-symbol {
-  font-size: 22rpx;
-  font-weight: 700;
-  color: #E07A5F;
-  margin-right: 2rpx;
-}
-
-.price-val {
-  font-size: 30rpx;
-  font-weight: 700;
+.cart-view .item .price {
+  font-size: 28rpx;
+  font-weight: 800;
   color: #E07A5F;
 }
 
-/* Quantity Adjuster */
-.quantity-adjuster {
-  display: flex;
-  align-items: center;
-  border: 1px solid var(--border-light);
-  border-radius: 28rpx;
-  overflow: hidden;
+/* Edit State adjustment */
+.cart-view .item.edit .attr {
+  font-weight: 700;
+  color: var(--text-muted);
+  text-align: right;
+  height: 38rpx;
+  line-height: 38rpx;
+}
+
+.cart-view .item.edit .b {
   height: 52rpx;
+}
+
+/* Stepper Quantity selection */
+.selnum {
+  width: 200rpx;
+  height: 52rpx;
+  border: 2rpx solid #E6D5B8;
+  border-radius: 26rpx;
+  overflow: hidden;
+  display: flex;
   background-color: #ffffff;
 }
 
-.adjust-btn {
-  width: 52rpx;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 26rpx;
-  font-weight: bold;
-  color: var(--text-main);
-  background-color: rgba(241, 245, 249, 0.5);
-}
-
-.adjust-btn:active {
-  background-color: #FAF6EE;
-}
-
-.qty-input {
+.selnum .cut {
   width: 60rpx;
+  height: 100%;
   text-align: center;
+  line-height: 48rpx;
+  font-size: 28rpx;
+  font-weight: bold;
+  background-color: #FAF6EE;
+  color: var(--text-main);
+}
+
+.selnum .cut:active, .selnum .add:active {
+  background-color: #E6D5B8;
+}
+
+.selnum .number {
+  flex: 1;
+  height: 100%;
+  text-align: center;
+  line-height: 48rpx;
   font-size: 24rpx;
   color: var(--text-main);
   font-weight: 700;
+  border-left: 2rpx solid #E6D5B8;
+  border-right: 2rpx solid #E6D5B8;
+}
+
+.selnum .add {
+  width: 60rpx;
+  height: 100%;
+  text-align: center;
+  line-height: 48rpx;
+  font-size: 28rpx;
+  font-weight: bold;
+  background-color: #FAF6EE;
+  color: var(--text-main);
 }
 
 .footer-spacer {
-  height: 180rpx;
+  height: 160rpx;
 }
 
-/* Empty State */
-.empty-cart {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  padding: 0 64rpx;
-  margin-top: 150rpx;
-}
-
-.empty-icon {
-  font-size: 110rpx;
-  margin-bottom: 24rpx;
-}
-
-.empty-title {
-  font-size: 32rpx;
-  font-weight: 800;
-  color: var(--text-main);
-  margin-bottom: 8rpx;
-}
-
-.empty-desc {
-  font-size: 24rpx;
-  color: var(--text-muted);
-  margin-bottom: 48rpx;
-}
-
-.shop-btn {
-  width: 240rpx;
-  height: 80rpx;
-  border-radius: 40rpx;
-  background: var(--primary-gradient);
-  color: #ffffff;
-  font-size: 26rpx;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Loading Cart */
-.loading-cart {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 60vh;
-}
-
-.loading-icon {
-  font-size: 60rpx;
-  margin-bottom: 16rpx;
-  animation: spinner 1.5s infinite linear;
-}
-
-.loading-text {
-  font-size: 24rpx;
-  color: var(--text-muted);
-  font-weight: 500;
-}
-
-/* Sticky Footer Checkout panel */
-.checkout-footer {
+/* Sticky Bottom Bar */
+.cart-bottom {
   position: fixed;
-  left: 0;
-  right: 0;
   bottom: 0;
-  height: 140rpx;
-  padding: 0 32rpx 0 40rpx;
-  z-index: 100;
+  left: 0;
+  width: 100%;
+  height: 110rpx;
+  background-color: #ffffff;
+  border-top: 1px solid var(--border-light);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  border-top: 1rpx solid rgba(226,232,240,0.5);
-  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.04);
+  padding: 0 32rpx;
+  box-sizing: border-box;
+  z-index: 100;
 }
 
 .select-all-wrap {
@@ -582,62 +678,64 @@ const onCheckout = () => {
 }
 
 .select-label {
-  font-size: 24rpx;
+  font-size: 26rpx;
   color: var(--text-main);
   font-weight: 700;
 }
 
-.checkout-info {
-  display: flex;
-  align-items: center;
-  gap: 28rpx;
-}
-
-.checkout-info .price-row {
-  display: flex;
-  align-items: baseline;
-}
-
-.total-label {
-  font-size: 24rpx;
-  color: var(--text-muted);
-  font-weight: 600;
-}
-
-.total-price-symbol {
-  font-size: 24rpx;
-  font-weight: 700;
-  color: #E07A5F;
-  margin-right: 2rpx;
-}
-
-.total-price-val {
-  font-size: 38rpx;
+.cart-bottom .total {
+  font-size: 32rpx;
   font-weight: 800;
   color: #E07A5F;
-  letter-spacing: -0.5rpx;
+  flex: 1;
+  text-align: right;
+  padding-right: 32rpx;
 }
 
-.checkout-btn {
-  height: 88rpx;
-  padding: 0 44rpx;
-  border-radius: 44rpx;
-  background: var(--primary-gradient);
-  color: #ffffff;
-  font-size: 26rpx;
+.action_btn_area {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-left: auto;
+}
+
+.action-btn {
+  height: 72rpx;
+  padding: 0 32rpx;
+  border-radius: 36rpx;
+  font-size: 24rpx;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.25);
+  letter-spacing: 2rpx;
+  transition: opacity 0.2s ease;
 }
 
-.checkout-btn:active {
+.action-btn:active {
   opacity: 0.85;
 }
 
-@keyframes spinner {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.action-btn.edit {
+  background-color: #FAF6EE;
+  color: #6F4E37;
+  border: 1px solid #E6D5B8;
+}
+
+.action-btn.sure {
+  background-color: #6F4E37;
+  color: #ffffff;
+}
+
+.action-btn.checkout {
+  background: var(--primary-gradient);
+  color: #ffffff;
+  box-shadow: 0 4rpx 12rpx rgba(224, 122, 95, 0.25);
+}
+
+.action-btn.delete {
+  background-color: #E07A5F;
+  color: #ffffff;
+  box-shadow: 0 4rpx 12rpx rgba(224, 122, 95, 0.25);
 }
 </style>

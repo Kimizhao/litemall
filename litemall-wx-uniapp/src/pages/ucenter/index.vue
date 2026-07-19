@@ -52,7 +52,7 @@
         <view class="service-row logout-row" v-if="hasLogin" @tap="onLogout">
           <view class="service-left">
             <text class="service-icon logout-icon">🚪</text>
-            <text class="service-label logout-text">退出账户登录</text>
+            <text class="service-label logout-text">退出登录</text>
           </view>
         </view>
       </view>

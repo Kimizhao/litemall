@@ -33,7 +33,11 @@
         {{ submitting ? '正在重置...' : '重置密码' }}
       </button>
 
-      <text class="login-link" @tap="onGoLogin">返回登录</text>
+      <view class="register-footer">
+        <text class="login-link" @tap="onGoLogin">返回登录</text>
+        <text class="footer-divider">|</text>
+        <text class="login-link" @tap="onBackTap">返回首页</text>
+      </view>
     </view>
   </view>
 </template>
@@ -256,6 +260,22 @@ const onBackTap = () => {
   font-size: 24rpx;
   color: rgba(255, 255, 255, 0.6);
   font-weight: 600;
+}
+
+.register-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16rpx;
   margin-top: 40rpx;
+}
+
+.register-footer .login-link {
+  margin-top: 0;
+}
+
+.footer-divider {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.1);
 }
 </style>

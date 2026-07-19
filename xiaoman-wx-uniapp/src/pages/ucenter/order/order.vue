@@ -91,22 +91,19 @@
       </view>
 
       <view class="empty-orders" v-else-if="!loading">
-        <text class="empty-icon">📦</text>
-        <text class="empty-title">暂无订单信息</text>
-        <text class="empty-desc">赶紧去挑选几件心仪的手作物吧</text>
+        <text class="empty-title">还没有任何订单呢</text>
       </view>
 
       <view class="feed-state">
         <text class="state-text" v-if="loading">正在同步订单...</text>
-        <text class="state-text" v-else-if="finished">已同步全部订单</text>
       </view>
     </scroll-view>
   </view>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { ref } from 'vue'
+import { onLoad, onShow } from '@dcloudio/uni-app'
 import request from '../../../utils/request'
 import api from '../../../config/api'
 
@@ -284,7 +281,7 @@ const onCommentOrder = (id) => {
   })
 }
 
-onMounted(() => {
+onShow(() => {
   getOrderList(true)
 })
 </script>
@@ -505,22 +502,10 @@ onMounted(() => {
   padding: 0 64rpx;
 }
 
-.empty-icon {
-  font-size: 100rpx;
-  margin-bottom: 24rpx;
-}
-
 .empty-title {
   font-size: 32rpx;
   font-weight: 800;
   color: var(--text-main);
-  margin-bottom: 8rpx;
-}
-
-.empty-desc {
-  font-size: 24rpx;
-  color: var(--text-muted);
-  text-align: center;
 }
 
 .feed-state {

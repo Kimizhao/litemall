@@ -7,17 +7,27 @@
       <!-- Profile Card Container -->
       <view class="profile-card dark-glass-panel">
         <view class="avatar-wrapper" @tap="onProfileTap">
-          <image :src="hasLogin ? (userInfo.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200') : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200'" class="avatar-image" mode="aspectFill" />
+          <!-- Show normal avatar if logged in, otherwise show silhouette placeholder -->
+          <image v-if="hasLogin" :src="userInfo.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200'" class="avatar-image" mode="aspectFill" />
+          <view v-else class="default-avatar-placeholder">
+            <text class="default-avatar-icon">👤</text>
+          </view>
           <view class="online-tag" v-if="hasLogin"></view>
         </view>
         
         <view class="user-meta" @tap="onProfileTap">
-          <text class="username">{{ hasLogin ? userInfo.nickname : '点击登录账号' }}</text>
-          <text class="user-id" v-if="hasLogin">小满食光尊享会员</text>
-          <text class="user-id" v-else>享受更便捷的本地购物体验</text>
+          <block v-if="hasLogin">
+            <text class="username">{{ userInfo.nickname }}</text>
+            <!-- <text class="user-id" v-if="userInfo.mobile">{{ userInfo.mobile }}</text> -->
+            <!-- <text class="user-id" v-else>小满食光尊享会员</text> -->
+          </block>
+          <block v-else>
+            <view class="login-prompt-row">
+              <text class="login-prompt-text">登录/注册</text>
+              <text class="login-prompt-arrow">›</text>
+            </view>
+          </block>
         </view>
-        
-        <view class="action-arrow" v-if="!hasLogin">➔</view>
       </view>
     </view>
 
@@ -32,6 +42,10 @@
         
         <view class="order-grid">
           <view class="order-item" v-for="(item, index) in orderStates" :key="index" @tap="onOrderStateTap(item)">
+            <view class="order-icon-wrapper">
+              <image class="order-icon-img" :src="item.icon" mode="aspectFit" />
+              <text class="order-badge" v-if="order[item.badgeKey] > 0">{{ order[item.badgeKey] }}</text>
+            </view>
             <text class="order-label">{{ item.label }}</text>
           </view>
         </view>
@@ -46,10 +60,23 @@
           <text class="service-arrow">›</text>
         </view>
         
+        <!-- Bind Phone Number (Only show when logged in and phone not bound) -->
+        <button 
+          v-if="hasLogin && !userInfo.mobile" 
+          class="service-row bind-phone-btn" 
+          open-type="getPhoneNumber" 
+          @getphonenumber="onGetPhoneNumber"
+        >
+          <view class="service-left">
+            <text class="service-label bind-phone-text">绑定手机号</text>
+          </view>
+          <text class="service-arrow">›</text>
+        </button>
+
         <!-- Log Out Row -->
         <view class="service-row logout-row" v-if="hasLogin" @tap="onLogout">
           <view class="service-left">
-            <text class="service-label logout-text">退出账户登录</text>
+            <text class="service-label logout-text">退出登录</text>
           </view>
         </view>
       </view>
@@ -67,11 +94,18 @@ import api from '../../config/api'
 const hasLogin = ref(false)
 const userInfo = ref(null)
 
+const order = ref({
+  unpaid: 0,
+  unship: 0,
+  unrecv: 0,
+  uncomment: 0
+})
+
 const orderStates = ref([
-  { label: '待付款', icon: '💳', status: 1 },
-  { label: '待发货', icon: '📦', status: 2 },
-  { label: '待收货', icon: '🚚', status: 3 },
-  { label: '待评价', icon: '⭐', status: 4 }
+  { label: '待付款', icon: '/static/images/pendpay.png', status: 1, badgeKey: 'unpaid' },
+  { label: '待发货', icon: '/static/images/send.png', status: 2, badgeKey: 'unship' },
+  { label: '待收货', icon: '/static/images/receive.png', status: 3, badgeKey: 'unrecv' },
+  { label: '待评价', icon: '/static/images/comment.png', status: 4, badgeKey: 'uncomment' }
 ])
 
 const services = ref([
@@ -82,23 +116,114 @@ const services = ref([
 ])
 
 // Auto reload login state upon view enter
-onShow(() => {
+onShow(async () => {
   const token = uni.getStorageSync('token')
   const storedUser = uni.getStorageSync('userInfo')
   if (token && storedUser) {
     hasLogin.value = true
     userInfo.value = JSON.parse(storedUser)
+    
+    // Async refresh profile from server
+    try {
+      const res = await request({
+        url: api.AuthInfo,
+        method: 'GET'
+      })
+      if (res) {
+        userInfo.value = {
+          nickname: res.nickName || '',
+          avatarUrl: res.avatar || '',
+          mobile: res.mobile || ''
+        }
+        
+        const cached = JSON.parse(uni.getStorageSync('userInfo') || '{}')
+        cached.nickName = res.nickName
+        cached.nickname = res.nickName
+        cached.avatarUrl = res.avatar
+        cached.avatar = res.avatar
+        cached.mobile = res.mobile
+        uni.setStorageSync('userInfo', JSON.stringify(cached))
+      }
+    } catch (err) {
+      console.error('Failed to sync user info onShow:', err)
+    }
+
+    // Async refresh order counts
+    try {
+      const res = await request({
+        url: api.UserIndex,
+        method: 'GET'
+      })
+      if (res && res.order) {
+        order.value = res.order
+      }
+    } catch (err) {
+      console.error('Failed to sync order counts onShow:', err)
+    }
   } else {
     hasLogin.value = false
     userInfo.value = null
+    order.value = {
+      unpaid: 0,
+      unship: 0,
+      unrecv: 0,
+      uncomment: 0
+    }
   }
 })
 
 const onProfileTap = () => {
-  if (!hasLogin.value) {
+  if (hasLogin.value) {
+    uni.navigateTo({
+      url: '/pages/ucenter/settings/settings'
+    })
+  } else {
     uni.navigateTo({
       url: '/pages/auth/login'
     })
+  }
+}
+
+const onGetPhoneNumber = async (e) => {
+  if (e.detail.errMsg !== 'getPhoneNumber:ok') {
+    uni.showToast({
+      title: '您取消了手机号授权',
+      icon: 'none'
+    })
+    return
+  }
+
+  const { encryptedData, iv } = e.detail
+  uni.showLoading({
+    title: '正在绑定手机号...'
+  })
+
+  try {
+    await request({
+      url: api.AuthBindPhone,
+      method: 'POST',
+      data: {
+        encryptedData: encryptedData,
+        iv: iv
+      }
+    })
+
+    uni.showToast({
+      title: '绑定成功！',
+      icon: 'success'
+    })
+
+    // Fetch the updated user profile to store
+    const fullUserInfo = await request({
+      url: api.AuthInfo,
+      method: 'GET'
+    })
+    userInfo.value = fullUserInfo
+    uni.setStorageSync('userInfo', JSON.stringify(fullUserInfo))
+  } catch (err) {
+    console.error('手机号绑定失败:', err)
+  } finally {
+    uni.hideLoading()
   }
 }
 
@@ -125,6 +250,12 @@ const onLogout = () => {
         uni.removeStorageSync('userInfo')
         hasLogin.value = false
         userInfo.value = null
+        order.value = {
+          unpaid: 0,
+          unship: 0,
+          unrecv: 0,
+          uncomment: 0
+        }
         
         uni.showToast({
           title: '已安全退出',
@@ -341,9 +472,38 @@ const onServiceTap = (item) => {
   transform: scale(0.9);
 }
 
-.order-icon {
-  font-size: 48rpx;
+.order-icon-wrapper {
+  position: relative;
+  width: 56rpx;
+  height: 56rpx;
   margin-bottom: 12rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.order-icon-img {
+  width: 100%;
+  height: 100%;
+}
+
+.order-badge {
+  position: absolute;
+  top: -12rpx;
+  right: -12rpx;
+  min-width: 28rpx;
+  height: 28rpx;
+  line-height: 28rpx;
+  background-color: #E07A5F;
+  color: #ffffff;
+  border-radius: 14rpx;
+  font-size: 18rpx;
+  text-align: center;
+  padding: 0 6rpx;
+  box-sizing: border-box;
+  font-weight: 700;
+  border: 2rpx solid #ffffff;
+  z-index: 2;
 }
 
 .order-label {
@@ -415,5 +575,68 @@ const onServiceTap = (item) => {
 .logout-text {
   color: #ef4444;
   font-weight: 700;
+}
+
+/* Bind Phone Number button row reset styling */
+.bind-phone-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  line-height: normal;
+  text-align: left;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bind-phone-btn::after {
+  border: none;
+}
+
+.bind-phone-text {
+  color: #E07A5F;
+  font-weight: 700;
+}
+
+/* Unlogged-in Default Avatar & Prompt Styling */
+.default-avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1rpx solid rgba(255, 255, 255, 0.1);
+}
+
+.default-avatar-icon {
+  font-size: 52rpx;
+  color: rgba(255, 255, 255, 0.95);
+  display: inline-block;
+  line-height: 1;
+}
+
+.login-prompt-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.login-prompt-text {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.login-prompt-arrow {
+  font-size: 36rpx;
+  color: rgba(255, 255, 255, 0.65);
+  font-weight: 600;
+  line-height: 1;
+  position: relative;
+  top: -2rpx;
 }
 </style>

@@ -141,6 +141,10 @@ public class WxHomeController {
             entity.put("grouponList", grouponListTask.get());
             entity.put("floorGoodsList", floorGoodsListTask.get());
             entity.put("announcement", SystemConfig.getMallAnnouncement());
+            entity.put("mallAddress", SystemConfig.getMallAddress());
+            entity.put("mallPhone", SystemConfig.getMallPhone());
+            entity.put("mallLatitude", SystemConfig.getMallLatitude());
+            entity.put("mallLongitude", SystemConfig.getMallLongitude());
             //缓存数据
             HomeCacheManager.loadData(HomeCacheManager.INDEX, entity);
         }

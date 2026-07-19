@@ -33,7 +33,8 @@
       "postcss": true,
       "minified": true
     },
-    "usingComponents": true
+    "usingComponents": true,
+    "lazyCodeLoading": "requiredComponents"
   },
   "h5": {
     "title": "小满食光",

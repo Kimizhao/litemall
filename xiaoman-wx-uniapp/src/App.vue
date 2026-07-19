@@ -15,7 +15,7 @@ export default {
 <style>
 /* Global Styles & Token System */
 
-:root {
+page {
   --primary-gradient: linear-gradient(135deg, #E07A5F 0%, #D86B4F 100%);
   --secondary-gradient: linear-gradient(135deg, #8B8E4B 0%, #767A3D 100%);
   --dark-gradient: linear-gradient(135deg, #6F4E37 0%, #4A3525 100%);
@@ -31,9 +31,7 @@ export default {
   --radius-sm: 12rpx;
   --radius-md: 24rpx;
   --radius-lg: 36rpx;
-}
 
-page {
   background-color: var(--bg-primary);
   font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   color: var(--text-main);

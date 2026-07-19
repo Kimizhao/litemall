@@ -44,6 +44,9 @@ This file defines the project architecture, naming conventions, build commands, 
 ### 3.4 WeChat QR Code Long-press Recognition
 * **Homepage (`index.vue`)**: Tapping the owner WeChat QR code wrapper invokes `onPreviewQR` which calls `uni.previewImage`. This allows the WeChat client to show its native long-press "Scan QR Code" menu.
 
+### 3.5 Product Detail Viewing
+* **Catalog/Ordering Page (`catalog.vue`)**: Tapping anywhere on a product card container `.goods-item` (excluding the quantity minus/plus selector buttons which have stop propagation) redirects to the detailed view page `/pages/goods/goods?id=${item.id}`.
+
 ---
 
 ## 4. Key Commands & Operations
@@ -60,3 +63,6 @@ This file defines the project architecture, naming conventions, build commands, 
 ### 4.3 Deployment (`deploy.sh` at root)
 * **Helper Script**: `./deploy.sh` compiles the H5 static assets, syncs them to the remote server, packages the Java jar, uploads it, and restarts the remote Docker container.
 * **CRITICAL**: Do **NOT** run `./deploy.sh` or sync changes to the remote server if the user specifies "先不部署" (do not deploy yet). Always compile and test changes locally first.
+
+### 4.4 Image Compression Helper (`compress_images.py` at root)
+* **Helper Script**: `./compress_images.py` provides batch image resizing (max dimension 800px) and quality compression (default 85%) for local and server storage images (JPEG/PNG). Overwriting original files in-place requires `--inplace` flag.
