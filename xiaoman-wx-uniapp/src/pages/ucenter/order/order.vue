@@ -106,6 +106,7 @@ import { ref } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import request from '../../../utils/request'
 import api from '../../../config/api'
+import { payOrder } from '../../../utils/pay'
 
 const tabs = [
   { name: '全部', showType: 0 },
@@ -243,10 +244,11 @@ const onCancelOrder = (id) => {
   })
 }
 
-const onPayOrder = (id) => {
-  uni.navigateTo({
-    url: `/pages/payResult/payResult?status=true&orderId=${id}`
-  })
+const onPayOrder = async (id) => {
+  const success = await payOrder(id)
+  if (success) {
+    getOrderList(true)
+  }
 }
 
 const onConfirmReceipt = (id, message) => {

@@ -234,7 +234,8 @@ const onLogout = () => {
           console.error('登出失败:', err)
         }
         
-        // Clear caches and redirect
+        // Clear caches, record manual logout, and redirect
+        uni.setStorageSync('hasLoggedOut', true)
         uni.removeStorageSync('token')
         uni.removeStorageSync('userInfo')
         

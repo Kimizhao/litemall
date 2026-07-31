@@ -162,6 +162,7 @@ import { onLoad } from '@dcloudio/uni-app'
 import request from '../../../utils/request'
 import api from '../../../config/api'
 import { parseOrderRemark, generatePickupCode } from '../../../utils/orderParser'
+import { payOrder } from '../../../utils/pay'
 
 const orderId = ref(0)
 const orderInfo = ref(null)
@@ -254,10 +255,11 @@ const onCancelOrder = () => {
   })
 }
 
-const onPayOrder = () => {
-  uni.navigateTo({
-    url: `/pages/payResult/payResult?status=true&orderId=${orderId.value}`
-  })
+const onPayOrder = async () => {
+  const success = await payOrder(orderId.value)
+  if (success) {
+    getOrderDetail()
+  }
 }
 
 const onConfirmReceipt = () => {

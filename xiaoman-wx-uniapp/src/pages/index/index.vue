@@ -10,7 +10,7 @@
         <!-- <view class="shop-avatar">满</view> -->
         <view class="shop-info">
           <!-- <text class="shop-name">小满食光</text> -->
-          <text class="shop-subtitle">三明治 · 简餐 · 饮品</text>
+          <text class="shop-subtitle">三明治 · 紫米饭团 · 饮品</text>
         </view>
       </view>
     </view>
@@ -96,7 +96,7 @@
           </view>
           <view class="gallery-item">
             <text class="gallery-icon">🍙</text>
-            <text class="gallery-name">手作简餐</text>
+            <text class="gallery-name">手作紫米饭团</text>
           </view>
           <view class="gallery-item">
             <text class="gallery-icon">🍹</text>

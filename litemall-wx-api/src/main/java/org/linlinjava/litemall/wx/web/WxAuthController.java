@@ -619,6 +619,8 @@ public class WxAuthController {
                 result.put("token", token);
                 result.put("userInfo", userInfo);
                 result.put("isBound", true);
+                result.put("openid", openId);
+                result.put("sessionKey", sessionKey);
                 return ResponseUtil.ok(result);
             }
         }

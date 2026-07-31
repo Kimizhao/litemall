@@ -642,7 +642,8 @@ public class WxOrderService {
         LitemallUser user = userService.findById(userId);
         String openid = user.getWeixinOpenid();
         if (openid == null) {
-            return ResponseUtil.fail(AUTH_OPENID_UNACCESS, "订单不能支付");
+            logger.warn("用户 id=" + userId + " 缺少 openid，无法发起微信支付");
+            return ResponseUtil.fail(AUTH_OPENID_UNACCESS, "未关联微信OpenID，无法发起微信支付");
         }
         WxPayMpOrderResult result = null;
         try {
@@ -659,8 +660,8 @@ public class WxOrderService {
 
             result = wxPayService.createOrder(orderRequest);
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseUtil.fail(ORDER_PAY_FAIL, "订单不能支付");
+            logger.error("微信统一下单失败: " + e.getMessage(), e);
+            return ResponseUtil.fail(ORDER_PAY_FAIL, "微信统一下单失败: " + e.getMessage());
         }
 
         if (orderService.updateWithOptimisticLocker(order) == 0) {

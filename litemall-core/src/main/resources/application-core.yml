@@ -50,6 +50,11 @@ litemall:
         accessKeyId: xxx
         accessKeySecret: xxx
 
+  # 商鹏智能云打印配置
+  printer:
+    appid: "sp6a5a3637a391a"
+    appsecret: "82c4ecae79d25f90e5f6724e9c04baee"
+
   # 快鸟物流查询配置
   express:
     enable: false

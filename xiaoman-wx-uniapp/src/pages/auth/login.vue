@@ -40,7 +40,11 @@
         </button>
         
         <button class="action-btn secondary" @tap="activeTab = 'sms'">
-          其他号码登录
+          验证码登录
+        </button>
+
+        <button class="action-btn secondary" @tap="activeTab = 'account'">
+          账号密码登录
         </button>
       </view>
 
@@ -89,7 +93,7 @@
             <view class="agreement-text">
               我已认真阅读、理解并同意
               <text class="agreement-link" @tap.stop="openDoc('service')">《用户协议》</text>
-              and
+              和
               <text class="agreement-link" @tap.stop="openDoc('privacy')">《隐私协议》</text>
               ，登录后自动绑定当前微信
             </view>
@@ -107,6 +111,57 @@
         <view class="sms-help" @tap="onSmsHelp">遇到问题</view>
       </view>
     </block>
+
+    <!-- TAB 3: Username & Password Login -->
+    <block v-else-if="activeTab === 'account'">
+      <view class="sms-form">
+        <!-- Back Arrow -->
+        <view class="back-arrow" @tap="activeTab = 'main'">‹ 其他登录方式</view>
+
+        <view class="input-group">
+          <input 
+            type="text" 
+            class="form-input" 
+            v-model="accountUsername" 
+            placeholder="请输入用户名或手机号" 
+            placeholder-style="color: #A18276;"
+          />
+          <input 
+            type="password" 
+            class="form-input" 
+            v-model="accountPassword" 
+            placeholder="请输入密码" 
+            placeholder-style="color: #A18276;"
+          />
+        </view>
+
+        <!-- Agreement Checkbox (Shared) -->
+        <view class="agreement-wrapper">
+          <label class="checkbox-label" @tap="toggleAgreement">
+            <checkbox :checked="agreed" color="#6F4E37" style="transform: scale(0.8);" />
+            <view class="agreement-text">
+              我已认真阅读、理解并同意
+              <text class="agreement-link" @tap.stop="openDoc('service')">《用户协议》</text>
+              和
+              <text class="agreement-link" @tap.stop="openDoc('privacy')">《隐私协议》</text>
+              ，登录后自动绑定当前微信
+            </view>
+          </label>
+        </view>
+
+        <button 
+          class="action-btn primary sms-submit-btn" 
+          @tap="handleAccountLogin"
+          :disabled="loading"
+        >
+          登录
+        </button>
+
+        <view class="account-actions">
+          <text class="account-action-link" @tap="onGoResetPassword">忘记密码？</text>
+        </view>
+      </view>
+    </block>
   </view>
 </template>
 
@@ -116,7 +171,7 @@ import request from '../../utils/request'
 import api from '../../config/api'
 
 // View states
-const activeTab = ref('main') // 'main' or 'sms'
+const activeTab = ref('main') // 'main', 'sms', or 'account'
 const agreed = ref(false)
 const loading = ref(false)
 
@@ -129,6 +184,10 @@ const smsPhone = ref('')
 const smsCode = ref('')
 const countdown = ref(0)
 let timer = null
+
+// Account Form
+const accountUsername = ref('')
+const accountPassword = ref('')
 
 const toggleAgreement = () => {
   agreed.value = !agreed.value
@@ -156,6 +215,12 @@ const onSmsHelp = () => {
     showCancel: false,
     confirmText: '我知道了',
     confirmColor: '#6F4E37'
+  })
+}
+
+const onGoResetPassword = () => {
+  uni.navigateTo({
+    url: '/pages/auth/reset'
   })
 }
 
@@ -249,6 +314,7 @@ const handleSmsLogin = async () => {
     })
 
     if (data && data.token) {
+      uni.removeStorageSync('hasLoggedOut')
       uni.setStorageSync('token', data.token)
       uni.setStorageSync('userInfo', JSON.stringify(data.userInfo))
 
@@ -270,6 +336,64 @@ const handleSmsLogin = async () => {
   }
 }
 
+// Account Username & Password Login Action
+const handleAccountLogin = async () => {
+  if (!agreed.value) {
+    uni.showToast({
+      title: '请先同意协议并勾选确认',
+      icon: 'none'
+    })
+    return
+  }
+  if (!accountUsername.value.trim()) {
+    uni.showToast({
+      title: '请输入用户名或手机号',
+      icon: 'none'
+    })
+    return
+  }
+  if (!accountPassword.value) {
+    uni.showToast({
+      title: '请输入密码',
+      icon: 'none'
+    })
+    return
+  }
+
+  loading.value = true
+  try {
+    const data = await request({
+      url: api.AuthLoginByAccount,
+      method: 'POST',
+      data: {
+        username: accountUsername.value.trim(),
+        password: accountPassword.value
+      }
+    })
+
+    if (data && data.token) {
+      uni.removeStorageSync('hasLoggedOut')
+      uni.setStorageSync('token', data.token)
+      uni.setStorageSync('userInfo', JSON.stringify(data.userInfo))
+
+      uni.showToast({
+        title: '登录成功！',
+        icon: 'success'
+      })
+
+      setTimeout(() => {
+        uni.switchTab({
+          url: '/pages/index/index'
+        })
+      }, 1000)
+    }
+  } catch (err) {
+    console.error('账号密码登录失败:', err)
+  } finally {
+    loading.value = false
+  }
+}
+
 // WeChat silent login
 const checkSilentLogin = () => {
   // #ifdef MP-WEIXIN
@@ -286,7 +410,17 @@ const checkSilentLogin = () => {
         })
 
         if (res) {
+          if (res.openid) openid.value = res.openid
+          if (res.sessionKey) sessionKey.value = res.sessionKey
+
           if (res.isBound && res.token) {
+            // Check if user manually logged out previously
+            const hasLoggedOut = uni.getStorageSync('hasLoggedOut')
+            if (hasLoggedOut) {
+              console.log('用户曾手动退出登录，禁用本次自动静默登录跳转')
+              return
+            }
+
             uni.setStorageSync('token', res.token)
             uni.setStorageSync('userInfo', JSON.stringify(res.userInfo))
             uni.showToast({
@@ -298,9 +432,6 @@ const checkSilentLogin = () => {
                 url: '/pages/index/index'
               })
             }, 1000)
-          } else {
-            openid.value = res.openid
-            sessionKey.value = res.sessionKey
           }
         }
       } catch (err) {
@@ -352,6 +483,7 @@ const handleWeixinPhoneLogin = async (e) => {
     })
 
     if (data && data.token) {
+      uni.removeStorageSync('hasLoggedOut')
       uni.setStorageSync('token', data.token)
       uni.setStorageSync('userInfo', JSON.stringify(data.userInfo))
 
@@ -506,7 +638,7 @@ const handleWeixinPhoneLogin = async (e) => {
   font-weight: 600;
 }
 
-/* SMS Verification View */
+/* SMS & Account Verification View */
 .sms-form {
   display: flex;
   flex-direction: column;
@@ -572,5 +704,17 @@ const handleWeixinPhoneLogin = async (e) => {
   color: #A18276;
   margin-top: 40rpx;
   font-weight: 500;
+}
+
+.account-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 30rpx;
+}
+
+.account-action-link {
+  font-size: 26rpx;
+  color: #E07A5F;
+  font-weight: 600;
 }
 </style>

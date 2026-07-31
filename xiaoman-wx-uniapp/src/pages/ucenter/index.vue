@@ -245,7 +245,8 @@ const onLogout = () => {
           console.error('Logout request failed:', err)
         }
         
-        // Remove locally cached keys
+        // Remove locally cached keys and mark manual logout
+        uni.setStorageSync('hasLoggedOut', true)
         uni.removeStorageSync('token')
         uni.removeStorageSync('userInfo')
         hasLogin.value = false

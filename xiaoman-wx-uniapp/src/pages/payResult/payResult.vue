@@ -97,6 +97,7 @@ import { onLoad } from '@dcloudio/uni-app'
 import request from '../../utils/request'
 import api from '../../config/api'
 import { parseOrderRemark, generatePickupCode } from '../../utils/orderParser'
+import { payOrder } from '../../utils/pay'
 
 const payStatus = ref(false)
 const orderId = ref(0)
@@ -148,18 +149,14 @@ const checkMockPayState = () => {
   }
 }
 
-// 模拟付款事件
-const onMockPayment = () => {
-  uni.showLoading({ title: '正在发起支付...' })
-  setTimeout(() => {
-    uni.hideLoading()
-    uni.setStorageSync('mock_paid_order_' + orderId.value, true)
+// 付款操作入口（接入微信支付）
+const onMockPayment = async () => {
+  const success = await payOrder(orderId.value)
+  if (success) {
+    payStatus.value = true
     isOrderPaid.value = true
-    uni.showToast({
-      title: '模拟支付成功',
-      icon: 'success'
-    })
-  }, 800)
+    await getOrderDetail()
+  }
 }
 
 onLoad((options) => {
@@ -179,29 +176,11 @@ const onViewOrder = () => {
 }
 
 const onPayRetry = async () => {
-  uni.showLoading({ title: '正在发起支付...' })
-  try {
-    await request({
-      url: api.OrderPrepay,
-      method: 'POST',
-      data: {
-        orderId: orderId.value
-      }
-    })
-    
-    uni.hideLoading()
-    uni.showToast({
-      title: '模拟支付成功',
-      icon: 'success'
-    })
-    
-    setTimeout(() => {
-      payStatus.value = true
-      getOrderDetail()
-    }, 1000)
-  } catch (err) {
-    uni.hideLoading()
-    console.error('Payment retry failed:', err)
+  const success = await payOrder(orderId.value)
+  if (success) {
+    payStatus.value = true
+    isOrderPaid.value = true
+    await getOrderDetail()
   }
 }
 

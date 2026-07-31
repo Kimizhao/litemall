@@ -154,6 +154,7 @@ import { ref, computed } from 'vue'
 import { onShow, onLoad } from '@dcloudio/uni-app'
 import request from '../../utils/request'
 import api from '../../config/api'
+import { payOrder } from '../../utils/pay'
 
 // Form state variables
 const checkoutData = ref(null)
@@ -377,10 +378,7 @@ const onSubmitOrder = async () => {
     })
     
     if (data && data.orderId) {
-      // Mock payment result direct redirect
-      uni.navigateTo({
-        url: `/pages/payResult/payResult?status=true&orderId=${data.orderId}`
-      })
+      await payOrder(data.orderId)
     } else {
       uni.navigateTo({
         url: `/pages/payResult/payResult?status=false`
