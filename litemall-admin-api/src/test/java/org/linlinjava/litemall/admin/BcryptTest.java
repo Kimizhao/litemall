@@ -2,24 +2,22 @@ package org.linlinjava.litemall.admin;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.linlinjava.litemall.core.util.bcrypt.BCryptPasswordEncoder;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-@RunWith(SpringJUnit4ClassRunner.class)
-@SpringBootTest
 public class BcryptTest {
 
     @Test
     public void test() {
-        String rawPassword = "aaaaaa";
-        String encodedPassword = "";
-        BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
-        encodedPassword = bCryptPasswordEncoder.encode(rawPassword);
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        String passMall = "mall123@Abc";
+        String hashMall = encoder.encode(passMall);
+        String passPromo = "promotion123@Abc";
+        String hashPromo = encoder.encode(passPromo);
 
-        System.out.println("rawPassword=" + rawPassword + " encodedPassword=" + encodedPassword);
+        System.out.println("MALL_HASH=" + hashMall);
+        System.out.println("PROMO_HASH=" + hashPromo);
 
-        Assert.assertTrue(bCryptPasswordEncoder.matches(rawPassword, encodedPassword));
+        Assert.assertTrue(encoder.matches(passMall, hashMall));
+        Assert.assertTrue(encoder.matches(passPromo, hashPromo));
     }
 }
