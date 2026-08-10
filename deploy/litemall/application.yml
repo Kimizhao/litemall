@@ -120,6 +120,12 @@ litemall:
   storage:
     # 当前工作的对象存储模式，分别是local、aliyun、tencent
     active: local
+    # 图片自动压缩配置
+    compress:
+      enabled: true
+      thresholdSize: 1048576 # 超过1MB自动压缩
+      maxDimension: 800      # 限制最大边长不超过800px
+      quality: 0.85          # 压缩质量85%
     # 本地对象存储配置信息
     local:
       storagePath: storage

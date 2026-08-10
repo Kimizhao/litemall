@@ -160,10 +160,13 @@ public class LitemallPrinterClient {
 
         // 2. 拼接订单票据排版内容
         StringBuilder sb = new StringBuilder();
-        sb.append("<C><L2>小满食光</L2></C>\n");
+        sb.append("<C><L1>小满食光</L1></C>\n");
         sb.append("<C>-- 订单结账单 --</C>\n");
-        sb.append("<BR>\n");
-        sb.append("下单时间：").append(order.getAddTime() != null ? order.getAddTime().toString() : "").append("\n");
+        String timeStr = "";
+        if (order.getAddTime() != null) {
+            timeStr = order.getAddTime().toString().replace("T", " ");
+        }
+        sb.append("下单时间：").append(timeStr).append("\n");
         sb.append("订单编号：").append(order.getOrderSn()).append("\n");
         sb.append("收 货 人：").append(order.getConsignee() != null ? order.getConsignee() : "").append("\n");
         sb.append("联系电话：").append(order.getMobile() != null ? order.getMobile() : "").append("\n");
@@ -173,27 +176,23 @@ public class LitemallPrinterClient {
         }
         sb.append("<BR>\n");
         sb.append("--------------------------------\n");
-        sb.append("商品名称        数量    单价\n");
+        sb.append("商品名称          数量      单价\n");
         for (LitemallOrderGoods goods : orderGoods) {
-            String name = goods.getGoodsName();
-            if (name == null) {
-                name = "";
-            }
-            if (name.length() > 10) {
-                name = name.substring(0, 8) + "..";
-            }
-            sb.append(String.format("%-14s  %-4d  ¥%s\n", name, goods.getNumber(), goods.getPrice().toString()));
+            String nameStr = padOrCut(goods.getGoodsName(), 14);
+            String numStr = padOrCut("    x" + goods.getNumber(), 10);
+            String priceStr = padOrCutRight(goods.getPrice().toString() + "元", 8);
+            sb.append(nameStr).append(numStr).append(priceStr).append("\n");
             if (goods.getSpecifications() != null && goods.getSpecifications().length > 0) {
                 sb.append(" 规格: ").append(Arrays.toString(goods.getSpecifications())).append("\n");
             }
         }
         sb.append("--------------------------------\n");
-        sb.append("商品总价：¥").append(order.getGoodsPrice() != null ? order.getGoodsPrice() : "0.00").append("\n");
-        sb.append("配送费用：¥").append(order.getFreightPrice() != null ? order.getFreightPrice() : "0.00").append("\n");
+        sb.append("商品总价：").append(order.getGoodsPrice() != null ? order.getGoodsPrice() : "0.00").append("元\n");
+        sb.append("配送费用：").append(order.getFreightPrice() != null ? order.getFreightPrice() : "0.00").append("元\n");
         if (order.getCouponPrice() != null && order.getCouponPrice().compareTo(BigDecimal.ZERO) > 0) {
-            sb.append("优惠金额：-¥").append(order.getCouponPrice()).append("\n");
+            sb.append("优惠金额：-").append(order.getCouponPrice()).append("元\n");
         }
-        sb.append("实付总计：¥").append(order.getActualPrice() != null ? order.getActualPrice() : "0.00").append("\n");
+        sb.append("实付总计：").append(order.getActualPrice() != null ? order.getActualPrice() : "0.00").append("元\n");
         sb.append("<BR>\n");
         sb.append("<AUDIO-COMMON>\n"); // 语音播报：你有新的订单，请及时处理
 
@@ -206,5 +205,51 @@ public class LitemallPrinterClient {
                 print(printer.getSn(), content, 1);
             }
         }
+    }
+
+    private String padOrCut(String str, int targetWidth) {
+        if (str == null) {
+            str = "";
+        }
+        StringBuilder sb = new StringBuilder();
+        int currentWidth = 0;
+        for (int i = 0; i < str.length(); i++) {
+            char c = str.charAt(i);
+            int charWidth = (c > 255) ? 2 : 1;
+            if (currentWidth + charWidth > targetWidth) {
+                break;
+            }
+            sb.append(c);
+            currentWidth += charWidth;
+        }
+        while (currentWidth < targetWidth) {
+            sb.append(' ');
+            currentWidth++;
+        }
+        return sb.toString();
+    }
+
+    private String padOrCutRight(String str, int targetWidth) {
+        if (str == null) {
+            str = "";
+        }
+        StringBuilder sb = new StringBuilder();
+        int currentWidth = 0;
+        for (int i = 0; i < str.length(); i++) {
+            char c = str.charAt(i);
+            int charWidth = (c > 255) ? 2 : 1;
+            if (currentWidth + charWidth > targetWidth) {
+                break;
+            }
+            sb.append(c);
+            currentWidth += charWidth;
+        }
+        StringBuilder result = new StringBuilder();
+        while (currentWidth < targetWidth) {
+            result.append(' ');
+            currentWidth++;
+        }
+        result.append(sb);
+        return result.toString();
     }
 }

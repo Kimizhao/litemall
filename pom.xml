@@ -184,6 +184,12 @@
                 <artifactId>aliyun-java-sdk-core</artifactId>
                 <version>4.0.3</version>
             </dependency>
+
+            <dependency>
+                <groupId>net.coobird</groupId>
+                <artifactId>thumbnailator</artifactId>
+                <version>0.4.20</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 

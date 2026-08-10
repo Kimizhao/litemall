@@ -32,6 +32,8 @@ public class StorageAutoConfiguration {
             throw new RuntimeException("当前存储模式 " + active + " 不支持");
         }
 
+        storageService.setCompress(this.properties.getCompress());
+
         return storageService;
     }
 

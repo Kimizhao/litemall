@@ -50,6 +50,55 @@ public class StorageProperties {
         this.qiniu = qiniu;
     }
 
+    private Compress compress = new Compress();
+
+    public Compress getCompress() {
+        return compress;
+    }
+
+    public void setCompress(Compress compress) {
+        this.compress = compress;
+    }
+
+    public static class Compress {
+        private boolean enabled = true;
+        private long thresholdSize = 1048576; // 1MB
+        private int maxDimension = 800;       // 800px
+        private double quality = 0.85;        // 85%
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public long getThresholdSize() {
+            return thresholdSize;
+        }
+
+        public void setThresholdSize(long thresholdSize) {
+            this.thresholdSize = thresholdSize;
+        }
+
+        public int getMaxDimension() {
+            return maxDimension;
+        }
+
+        public void setMaxDimension(int maxDimension) {
+            this.maxDimension = maxDimension;
+        }
+
+        public double getQuality() {
+            return quality;
+        }
+
+        public void setQuality(double quality) {
+            this.quality = quality;
+        }
+    }
+
     public static class Local {
         private String address;
         private String storagePath;
