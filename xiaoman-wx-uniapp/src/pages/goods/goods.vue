@@ -208,7 +208,7 @@ const goodsId = ref(0)
 
 onShareAppMessage((res) => {
   return {
-    title: goods.value && goods.value.name ? `${goods.value.name} - 小满食光` : '小满食光 - 手作美食与温度咖啡',
+    title: goods.value && goods.value.name ? `${goods.value.name} - 小满食光` : '小满食光 - 三明治·紫米饭团·饮品',
     path: `/pages/goods/goods?id=${goodsId.value}`,
     imageUrl: goods.value && goods.value.picUrl ? goods.value.picUrl : ''
   }
@@ -216,7 +216,7 @@ onShareAppMessage((res) => {
 
 onShareTimeline(() => {
   return {
-    title: goods.value && goods.value.name ? `${goods.value.name} - 小满食光` : '小满食光 - 手作美食与温度咖啡',
+    title: goods.value && goods.value.name ? `${goods.value.name} - 小满食光` : '小满食光 - 三明治·紫米饭团·饮品',
     query: `id=${goodsId.value}`,
     imageUrl: goods.value && goods.value.picUrl ? goods.value.picUrl : ''
   }
