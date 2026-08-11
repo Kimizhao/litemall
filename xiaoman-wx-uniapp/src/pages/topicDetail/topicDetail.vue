@@ -79,7 +79,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { onLoad, onShow } from '@dcloudio/uni-app'
+import { onLoad, onShow, onShareAppMessage, onShareTimeline } from '@dcloudio/uni-app'
 import request from '../../utils/request'
 import api from '../../config/api'
 
@@ -88,6 +88,22 @@ const topic = ref(null)
 const goodsList = ref([])
 const commentList = ref([])
 const commentCount = ref(0)
+
+onShareAppMessage((res) => {
+  return {
+    title: topic.value && topic.value.title ? `${topic.value.title} - 小满食光` : '小满食光专题精选',
+    path: `/pages/topicDetail/topicDetail?id=${topicId.value}`,
+    imageUrl: topic.value && topic.value.picUrl ? topic.value.picUrl : ''
+  }
+})
+
+onShareTimeline(() => {
+  return {
+    title: topic.value && topic.value.title ? `${topic.value.title} - 小满食光` : '小满食光专题精选',
+    query: `id=${topicId.value}`,
+    imageUrl: topic.value && topic.value.picUrl ? topic.value.picUrl : ''
+  }
+})
 
 onLoad((options) => {
   if (options.id) {

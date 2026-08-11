@@ -110,9 +110,23 @@
 
 <script setup>
 import { ref } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
+import { onShow, onShareAppMessage, onShareTimeline } from '@dcloudio/uni-app'
 import request from '../../utils/request'
 import api, { WxApiHost } from '../../config/api'
+
+onShareAppMessage((res) => {
+  return {
+    title: '小满食光 - 手作美食与温度咖啡',
+    path: '/pages/index/index'
+  }
+})
+
+onShareTimeline(() => {
+  return {
+    title: '小满食光 - 手作美食与温度咖啡',
+    query: ''
+  }
+})
 
 const shopHeaderBg = `/static/xiaoman/shop_header.jpg`
 const contactQr = `/static/xiaoman/contact_qr.png`

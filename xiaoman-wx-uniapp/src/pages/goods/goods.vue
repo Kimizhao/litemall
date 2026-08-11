@@ -27,6 +27,7 @@
     <!-- Title Row -->
     <view class="goods_name">
       <view class="goods_name_left">{{ goods.name }}</view>
+      <button class="goods_name_right" open-type="share">分享</button>
     </view>
 
     <!-- Goods Core Info Description & Price -->
@@ -198,12 +199,28 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { onLoad, onShow } from '@dcloudio/uni-app'
+import { onLoad, onShow, onShareAppMessage, onShareTimeline } from '@dcloudio/uni-app'
 import request from '../../utils/request'
 import api from '../../config/api'
 
 // Route dynamic ID
 const goodsId = ref(0)
+
+onShareAppMessage((res) => {
+  return {
+    title: goods.value && goods.value.name ? `${goods.value.name} - 小满食光` : '小满食光 - 手作美食与温度咖啡',
+    path: `/pages/goods/goods?id=${goodsId.value}`,
+    imageUrl: goods.value && goods.value.picUrl ? goods.value.picUrl : ''
+  }
+})
+
+onShareTimeline(() => {
+  return {
+    title: goods.value && goods.value.name ? `${goods.value.name} - 小满食光` : '小满食光 - 手作美食与温度咖啡',
+    query: `id=${goodsId.value}`,
+    imageUrl: goods.value && goods.value.picUrl ? goods.value.picUrl : ''
+  }
+})
 
 // Navigation bar heights
 const statusBarHeight = ref(20)

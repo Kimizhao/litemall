@@ -11,15 +11,15 @@
     <!-- Logged in state -->
     <view class="login-workspace" v-else>
       <!-- Empty cart state -->
-      <view class="no-cart" v-if="cartList.length === 0 && !loading">
+      <view class="no-cart" v-if="hasLoaded && cartList.length === 0">
         <view class="c">
           <text class="empty-title">空空如也~</text>
           <text class="empty-desc">去添加点什么吧</text>
         </view>
       </view>
 
-      <!-- Cart view -->
-      <view class="cart-view" v-else>
+      <!-- Cart view (Only rendered when there are items) -->
+      <view class="cart-view" v-else-if="cartList.length > 0">
         <scroll-view scroll-y class="cart-scroll">
           <view class="list">
             <view class="group-item">
@@ -93,6 +93,11 @@
           </view>
         </view>
       </view>
+
+      <!-- Initial Loading state -->
+      <view class="loading-wrap" v-else-if="loading || !hasLoaded">
+        <text class="loading-text">正在同步购物车...</text>
+      </view>
     </view>
   </view>
 </template>
@@ -113,6 +118,7 @@ const cartTotal = ref({
   checkedGoodsAmount: 0.00
 })
 const loading = ref(false)
+const hasLoaded = ref(false)
 
 // Edit mode and select all helper states
 const isEditCart = ref(false)
@@ -135,6 +141,7 @@ const getCartData = async () => {
     console.error('Failed to sync Litemall cart:', err)
   } finally {
     loading.value = false
+    hasLoaded.value = true
   }
 }
 
@@ -737,5 +744,18 @@ const onCheckout = () => {
   background-color: #E07A5F;
   color: #ffffff;
   box-shadow: 0 4rpx 12rpx rgba(224, 122, 95, 0.25);
+}
+
+.loading-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 60vh;
+}
+
+.loading-text {
+  font-size: 24rpx;
+  color: var(--text-muted);
+  font-weight: 500;
 }
 </style>

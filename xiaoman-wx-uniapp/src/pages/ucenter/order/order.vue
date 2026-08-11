@@ -90,12 +90,12 @@
         </view>
       </view>
 
-      <view class="empty-orders" v-else-if="!loading">
+      <view class="empty-orders" v-else-if="hasLoaded && !loading">
         <text class="empty-title">还没有任何订单呢</text>
       </view>
 
       <view class="feed-state">
-        <text class="state-text" v-if="loading">正在同步订单...</text>
+        <text class="state-text" v-if="loading || !hasLoaded">正在同步订单...</text>
       </view>
     </scroll-view>
   </view>
@@ -121,6 +121,7 @@ const orderList = ref([])
 const page = ref(1)
 const limit = ref(10)
 const loading = ref(false)
+const hasLoaded = ref(false)
 const finished = ref(false)
 const refreshing = ref(false)
 
@@ -186,11 +187,15 @@ const getOrderList = async (reset = false) => {
   } finally {
     loading.value = false
     refreshing.value = false
+    hasLoaded.value = true
   }
 }
 
 const onTabChange = (type) => {
+  if (showType.value === type) return
   showType.value = type
+  orderList.value = []
+  hasLoaded.value = false
   getOrderList(true)
 }
 
@@ -303,6 +308,8 @@ onShow(() => {
   display: flex;
   justify-content: space-around;
   height: 88rpx;
+  min-height: 88rpx;
+  flex-shrink: 0;
   align-items: center;
   border-bottom: 1px solid var(--border-light);
 }

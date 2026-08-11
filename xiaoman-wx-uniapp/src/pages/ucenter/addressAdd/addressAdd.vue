@@ -117,7 +117,7 @@ const onSave = async () => {
 
   submitting.value = true
   try {
-    await request({
+    const res = await request({
       url: api.AddressSave,
       method: 'POST',
       data: {
@@ -132,6 +132,9 @@ const onSave = async () => {
         areaCode: '100000' // mock area code standard
       }
     })
+    if (res) {
+      uni.setStorageSync('selectedAddressId', res)
+    }
     uni.showToast({
       title: '保存地址成功',
       icon: 'success'

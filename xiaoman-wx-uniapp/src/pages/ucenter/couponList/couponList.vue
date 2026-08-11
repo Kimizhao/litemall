@@ -41,14 +41,14 @@
         </view>
       </view>
 
-      <view class="empty-coupons" v-else-if="!loading">
+      <view class="empty-coupons" v-else-if="hasLoaded && !loading">
         <text class="empty-icon">🎫</text>
         <text class="empty-title">无优惠券记录</text>
         <text class="empty-desc">赶紧去领券中心看看有无合适的宝贝券吧</text>
       </view>
 
       <view class="feed-state">
-        <text class="state-text" v-if="loading">正在加载优惠券...</text>
+        <text class="state-text" v-if="loading || !hasLoaded">正在加载优惠券...</text>
         <text class="state-text" v-else-if="finished">已加载全部优惠券</text>
       </view>
     </scroll-view>
@@ -71,6 +71,7 @@ const couponList = ref([])
 const page = ref(1)
 const limit = ref(10)
 const loading = ref(false)
+const hasLoaded = ref(false)
 const finished = ref(false)
 
 const getMyCoupons = async (reset = false) => {
@@ -108,11 +109,15 @@ const getMyCoupons = async (reset = false) => {
     console.error('Failed to get my coupons:', err)
   } finally {
     loading.value = false
+    hasLoaded.value = true
   }
 }
 
 const onStatusChange = (status) => {
+  if (currentStatus.value === status) return
   currentStatus.value = status
+  couponList.value = []
+  hasLoaded.value = false
   getMyCoupons(true)
 }
 
@@ -140,6 +145,8 @@ onMounted(() => {
   display: flex;
   justify-content: space-around;
   height: 88rpx;
+  min-height: 88rpx;
+  flex-shrink: 0;
   align-items: center;
   border-bottom: 1px solid var(--border-light);
 }

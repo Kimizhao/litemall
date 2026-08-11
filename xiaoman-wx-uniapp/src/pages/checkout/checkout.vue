@@ -62,47 +62,43 @@
       </view>
     </view>
 
-    <!-- 3. 配送与联系人表单卡片 -->
+    <!-- 3. 配送与收货地址卡片 -->
     <view class="delivery-card glass-panel">
-      <view class="card-title">配送信息</view>
-
-      <!-- 联系人 -->
-      <view class="form-row">
-        <text class="form-label">联系人</text>
-        <input 
-          type="text" 
-          class="form-input" 
-          v-model="contactName" 
-          placeholder="请输入联系人姓名" 
-          maxlength="15"
-        />
+      <view class="card-header">
+        <view class="card-title">配送信息</view>
+        <view class="switch-address-btn" @tap="onSelectAddress" v-if="checkedAddress">
+          <text class="switch-text">切换地址</text>
+          <text class="arrow-icon">❯</text>
+        </view>
       </view>
 
-      <!-- 联系电话 -->
-      <view class="form-row">
-        <text class="form-label">联系电话</text>
-        <input 
-          type="number" 
-          class="form-input" 
-          v-model="contactPhone" 
-          placeholder="请输入联系电话" 
-          maxlength="11"
-        />
+      <!-- 已选择/默认收货地址 -->
+      <view class="address-box" v-if="checkedAddress" @tap="onSelectAddress">
+        <view class="address-user-info">
+          <text class="user-name">{{ checkedAddress.name }}</text>
+          <text class="user-phone">{{ checkedAddress.tel }}</text>
+          <text class="tag-default" v-if="checkedAddress.isDefault">默认</text>
+        </view>
+        <view class="address-detail-text">
+          <text class="location-icon">📍</text>
+          <text class="detail-content">{{ fullAddressText }}</text>
+        </view>
       </view>
 
-      <!-- 配送地址 -->
-      <view class="form-row align-start">
-        <text class="form-label address-label">配送地址</text>
-        <textarea 
-          class="form-textarea address-textarea" 
-          v-model="deliveryAddress" 
-          placeholder="请输入详细的配送地址" 
-          maxlength="100"
-        />
+      <!-- 暂无收货地址状态 -->
+      <view class="no-address-box" v-else @tap="onSelectAddress">
+        <view class="no-address-left">
+          <text class="no-address-icon">📍</text>
+          <view class="no-address-text-group">
+            <text class="no-address-title">暂无收货地址</text>
+            <text class="no-address-desc">点击前往收货地址管理添加收货地址</text>
+          </view>
+        </view>
+        <view class="add-address-btn">+ 添加地址</view>
       </view>
 
       <!-- 备注 -->
-      <view class="form-row align-start no-border">
+      <view class="form-row align-start no-border remark-row">
         <text class="form-label">备注说明</text>
         <textarea 
           class="form-textarea" 
@@ -243,12 +239,30 @@ const initBookingDateTime = () => {
     bookingTime.value = '早餐 8:00'
   }
 }
+const checkedAddress = ref(null)
 const contactName = ref('')
 const contactPhone = ref('')
 const deliveryAddress = ref('')
 const remark = ref('')
 const submitting = ref(false)
 const savedAddresses = ref([])
+const hasRedirectedForNoAddress = ref(false)
+
+const fullAddressText = computed(() => {
+  if (!checkedAddress.value) return ''
+  const addr = checkedAddress.value
+  const region = [addr.province, addr.city, addr.county].filter(Boolean).join('')
+  if (region && addr.addressDetail && addr.addressDetail.startsWith(region)) {
+    return addr.addressDetail
+  }
+  return (region ? region + ' ' : '') + (addr.addressDetail || '')
+})
+
+const onSelectAddress = () => {
+  uni.navigateTo({
+    url: '/pages/ucenter/address/address?isSelect=true'
+  })
+}
 
 onLoad((options) => {
   if (options.cartId) cartId.value = parseInt(options.cartId)
@@ -285,6 +299,14 @@ const getCheckoutInfo = async () => {
 
 onShow(async () => {
   initBookingDateTime()
+  
+  // 1. Read cached selected address ID if user selected from address management page
+  const cachedAddressId = uni.getStorageSync('selectedAddressId')
+  if (cachedAddressId) {
+    uni.removeStorageSync('selectedAddressId')
+  }
+
+  // 2. Fetch address list
   try {
     const res = await request({
       url: api.AddressList,
@@ -292,16 +314,43 @@ onShow(async () => {
     })
     savedAddresses.value = (res && res.list) || []
     
-    // Auto populate default address details (excluding virtual self-pickup address)
-    const normal = savedAddresses.value.find(item => item.name !== '到店自提(小满食光)')
-    if (normal) {
-      addressId.value = normal.id
-      contactName.value = normal.name || ''
-      contactPhone.value = normal.tel || ''
-      deliveryAddress.value = normal.addressDetail || ''
+    const validAddresses = savedAddresses.value.filter(item => item.name !== '到店自提(小满食光)')
+    
+    let target = null
+    if (cachedAddressId) {
+      target = validAddresses.find(item => item.id === parseInt(cachedAddressId))
+    }
+    if (!target) {
+      target = validAddresses.find(item => item.isDefault)
+    }
+    if (!target && validAddresses.length > 0) {
+      target = validAddresses[0]
+    }
+    
+    if (target) {
+      checkedAddress.value = target
+      addressId.value = target.id
+      contactName.value = target.name || ''
+      contactPhone.value = target.tel || ''
+      deliveryAddress.value = target.addressDetail || ''
+    } else {
+      checkedAddress.value = null
+      addressId.value = 0
+      contactName.value = ''
+      contactPhone.value = ''
+      deliveryAddress.value = ''
+
+      // If user has no address, redirect to address management page to add one
+      if (!hasRedirectedForNoAddress.value) {
+        hasRedirectedForNoAddress.value = true
+        uni.showToast({ title: '请先添加收货地址', icon: 'none' })
+        setTimeout(() => {
+          onSelectAddress()
+        }, 500)
+      }
     }
   } catch (e) {
-    console.error(e)
+    console.error('Failed to load address list:', e)
   }
   await getCheckoutInfo()
 })
@@ -312,57 +361,21 @@ const onSubmitOrder = async () => {
     uni.showToast({ title: '所选的送餐时间已失效，请重新选择', icon: 'none' })
     return
   }
-  if (!contactName.value.trim()) {
-    uni.showToast({ title: '请填写联系人姓名', icon: 'none' })
-    return
-  }
-  if (!contactPhone.value.trim()) {
-    uni.showToast({ title: '请填写联系电话', icon: 'none' })
-    return
-  }
-  if (!/^1[3-9]\d{9}$/.test(contactPhone.value.trim())) {
-    uni.showToast({ title: '请输入合规 of 11位手机号', icon: 'none' })
-    return
-  }
-  if (!deliveryAddress.value.trim()) {
-    uni.showToast({ title: '请填写详细的配送地址', icon: 'none' })
+  if (!checkedAddress.value || !addressId.value) {
+    uni.showToast({ title: '请先添加并选择收货地址', icon: 'none' })
+    setTimeout(() => {
+      onSelectAddress()
+    }, 500)
     return
   }
 
   submitting.value = true
   try {
-    // Determine whether current addressId is the virtual one
-    const isVirtual = savedAddresses.value.some(item => item.id === addressId.value && item.name === '到店自提(小满食光)')
-    const saveId = (isVirtual || !addressId.value) ? 0 : addressId.value
-
-    // 1. Silent-save user's inputted address to the database (so we get a valid address ID)
-    const addressData = await request({
-      url: api.AddressSave,
-      method: 'POST',
-      data: {
-        id: saveId,
-        name: contactName.value.trim(),
-        tel: contactPhone.value.trim(),
-        province: '福建省',
-        city: '福州市',
-        county: '仓山区',
-        areaCode: '350104', // Fuzhou Cangshan Area Code
-        addressDetail: deliveryAddress.value.trim(),
-        isDefault: true
-      }
-    })
-    
-    if (!addressData) {
-      throw new Error('地址保存失败，请检查输入后重试')
-    }
-    
-    addressId.value = addressData
-
-    // 2. Format custom booking info inside order message remark
+    // Format custom booking info inside order message remark
     const cleanRemark = remark.value.trim() ? remark.value.replace(/[\r\n|]/g, ' ').trim() : '无'
-    const messageValue = `[预约送餐] 时间:${bookingDate.value} ${bookingTime.value} | 称呼:${contactName.value.trim()} | 电话:${contactPhone.value.trim()} | 备注:${cleanRemark}`
+    const messageValue = `[预约送餐] 时间:${bookingDate.value} ${bookingTime.value} | 称呼:${checkedAddress.value.name} | 电话:${checkedAddress.value.tel} | 备注:${cleanRemark}`
     
-    // 3. Submit order
+    // Submit order using chosen addressId
     const data = await request({
       url: api.OrderSubmit,
       method: 'POST',
@@ -488,6 +501,142 @@ const onSubmitOrder = async () => {
   font-size: 22rpx;
   color: var(--text-muted);
   font-weight: 700;
+}
+
+/* Delivery Card Header & Switch Button */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.switch-address-btn {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  padding: 6rpx 16rpx;
+  background-color: #FAF6EE;
+  border-radius: 20rpx;
+  border: 1rpx solid rgba(230, 213, 184, 0.4);
+}
+
+.switch-text {
+  font-size: 22rpx;
+  font-weight: 700;
+  color: #6F4E37;
+}
+
+.arrow-icon {
+  font-size: 18rpx;
+  color: #A18276;
+}
+
+/* Address Box & Content */
+.address-box {
+  background-color: #FAF6EE;
+  border-radius: 20rpx;
+  padding: 24rpx;
+  margin-top: 12rpx;
+  border: 1rpx solid rgba(230, 213, 184, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.address-user-info {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.user-name {
+  font-size: 28rpx;
+  font-weight: 800;
+  color: #4A3525;
+}
+
+.user-phone {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #A18276;
+}
+
+.tag-default {
+  padding: 2rpx 12rpx;
+  background: var(--primary-gradient);
+  color: #ffffff;
+  font-size: 18rpx;
+  font-weight: 700;
+  border-radius: 6rpx;
+}
+
+.address-detail-text {
+  display: flex;
+  align-items: flex-start;
+  gap: 8rpx;
+}
+
+.location-icon {
+  font-size: 24rpx;
+}
+
+.detail-content {
+  font-size: 24rpx;
+  color: #4A3525;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* No Address State Box */
+.no-address-box {
+  background-color: #FAF6EE;
+  border-radius: 20rpx;
+  padding: 28rpx 24rpx;
+  margin-top: 12rpx;
+  border: 1rpx dashed #E07A5F;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.no-address-left {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.no-address-icon {
+  font-size: 40rpx;
+}
+
+.no-address-text-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.no-address-title {
+  font-size: 26rpx;
+  font-weight: 800;
+  color: #E07A5F;
+}
+
+.no-address-desc {
+  font-size: 20rpx;
+  color: #A18276;
+}
+
+.add-address-btn {
+  padding: 10rpx 24rpx;
+  background-color: #E07A5F;
+  color: #FFFFFF;
+  font-size: 22rpx;
+  font-weight: 700;
+  border-radius: 24rpx;
+}
+
+.remark-row {
+  margin-top: 16rpx;
 }
 
 /* Form Row & Inputs */

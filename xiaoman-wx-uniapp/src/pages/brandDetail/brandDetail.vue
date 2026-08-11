@@ -46,13 +46,29 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { onLoad, onShareAppMessage, onShareTimeline } from '@dcloudio/uni-app'
 import request from '../../utils/request'
 import api from '../../config/api'
 
 const brandId = ref(0)
 const brand = ref(null)
 const goodsList = ref([])
+
+onShareAppMessage((res) => {
+  return {
+    title: brand.value && brand.value.name ? `${brand.value.name} - 小满食光` : '小满食光品牌故事',
+    path: `/pages/brandDetail/brandDetail?id=${brandId.value}`,
+    imageUrl: brand.value && brand.value.picUrl ? brand.value.picUrl : ''
+  }
+})
+
+onShareTimeline(() => {
+  return {
+    title: brand.value && brand.value.name ? `${brand.value.name} - 小满食光` : '小满食光品牌故事',
+    query: `id=${brandId.value}`,
+    imageUrl: brand.value && brand.value.picUrl ? brand.value.picUrl : ''
+  }
+})
 
 onLoad((options) => {
   if (options.id) {
