@@ -18,54 +18,38 @@
       </view>
     </view>
 
-    <!-- 2. 预订核心表单卡片 -->
+    <!-- 2. 预订方式选择卡片 -->
     <view class="booking-card glass-panel">
-      <view class="card-title">预订时间</view>
+      <view class="card-title">预订方式</view>
       
-      <!-- 日期选择 (今天 / 明天) -->
-      <view class="form-row date-row">
-        <text class="form-label">预订日期</text>
-        <view class="segmented-control">
-          <view 
-            class="segment-item" 
-            :class="{ active: bookingDate === '今天', disabled: !isTodayAvailable }" 
-            @tap="selectDate('今天')"
-          >今天</view>
-          <view 
-            class="segment-item" 
-            :class="{ active: bookingDate === '明天' }" 
-            @tap="selectDate('明天')"
-          >明天</view>
-        </view>
-      </view>
-
-      <!-- 时间选择 (早餐 8:00 / 午餐 12:00 / 晚餐 18:00) -->
-      <view class="form-row time-row">
-        <text class="form-label">送达时间</text>
-        <view class="segmented-control">
-          <view 
-            class="segment-item" 
-            :class="{ active: bookingTime === '早餐 8:00', disabled: !isTimeSlotAvailable(bookingDate, '早餐 8:00') }" 
-            @tap="selectTime('早餐 8:00')"
-          >早餐 8:00</view>
-          <view 
-            class="segment-item" 
-            :class="{ active: bookingTime === '午餐 12:00', disabled: !isTimeSlotAvailable(bookingDate, '午餐 12:00') }" 
-            @tap="selectTime('午餐 12:00')"
-          >午餐 12:00</view>
-          <view 
-            class="segment-item" 
-            :class="{ active: bookingTime === '晚餐 18:00', disabled: !isTimeSlotAvailable(bookingDate, '晚餐 18:00') }" 
-            @tap="selectTime('晚餐 18:00')"
-          >晚餐 18:00</view>
+      <view class="booking-option-list">
+        <view 
+          class="booking-option-item" 
+          :class="{ active: selectedMode === item.id }"
+          v-for="item in bookingOptions" 
+          :key="item.id"
+          @tap="selectBookingMode(item.id)"
+        >
+          <view class="option-left">
+            <view class="option-radio">
+              <view class="radio-dot" v-if="selectedMode === item.id"></view>
+            </view>
+            <view class="option-info">
+              <text class="option-name">{{ item.name }}</text>
+              <text class="option-tip" v-if="item.tip">{{ item.tip }}</text>
+            </view>
+          </view>
+          <view class="option-right" v-if="item.time">
+            <text class="option-time-badge">{{ item.time }}</text>
+          </view>
         </view>
       </view>
     </view>
 
-    <!-- 3. 配送与收货地址卡片 -->
+    <!-- 3. 联系与配送信息卡片 -->
     <view class="delivery-card glass-panel">
       <view class="card-header">
-        <view class="card-title">配送信息</view>
+        <view class="card-title">{{ selectedMode === 'pickup' ? '取餐联系信息' : '配送联系信息' }}</view>
         <view class="switch-address-btn" @tap="onSelectAddress" v-if="checkedAddress">
           <text class="switch-text">切换地址</text>
           <text class="arrow-icon">❯</text>
@@ -90,8 +74,8 @@
         <view class="no-address-left">
           <text class="no-address-icon">📍</text>
           <view class="no-address-text-group">
-            <text class="no-address-title">暂无收货地址</text>
-            <text class="no-address-desc">点击前往收货地址管理添加收货地址</text>
+            <text class="no-address-title">暂无联系地址</text>
+            <text class="no-address-desc">点击前往地址管理添加联系人与地址</text>
           </view>
         </view>
         <view class="add-address-btn">+ 添加地址</view>
@@ -103,8 +87,8 @@
         <textarea 
           class="form-textarea" 
           v-model="remark" 
-          placeholder="口味偏好/忌口要求/配送叮嘱（选填）" 
-          maxlength="60"
+          :placeholder="remarkPlaceholder" 
+          maxlength="80"
         />
       </view>
     </view>
@@ -166,79 +150,34 @@ const userCouponId = ref(0)
 const grouponRulesId = ref(0)
 const grouponLinkId = ref(0)
 
-const bookingDate = ref('今天')
-const bookingTime = ref('午餐 12:00')
+// 预订方式选项列表
+const bookingOptions = [
+  {
+    id: 'shier',
+    name: '市二',
+    time: '07:00-08:00',
+    tip: ''
+  },
+  {
+    id: 'shida',
+    name: '师大',
+    time: '17:00-18:00',
+    tip: ''
+  },
+  {
+    id: 'pickup',
+    name: '到店自取',
+    time: '',
+    tip: '请备注时间，至少提前半天'
+  }
+]
 
-const isTimeSlotAvailable = (dateOption, timeOption) => {
-  if (dateOption === '明天') {
-    return true
-  }
-  const now = new Date()
-  const currentHour = now.getHours()
-  const currentMinute = now.getMinutes()
-  const currentTotalMinutes = currentHour * 60 + currentMinute
-  
-  let targetTotalMinutes = 0
-  if (timeOption === '早餐 8:00') {
-    targetTotalMinutes = 8 * 60
-  } else if (timeOption === '午餐 12:00') {
-    targetTotalMinutes = 12 * 60
-  } else if (timeOption === '晚餐 18:00') {
-    targetTotalMinutes = 18 * 60
-  }
-  
-  return (currentTotalMinutes + 30) <= targetTotalMinutes
+const selectedMode = ref('shier')
+
+const selectBookingMode = (modeId) => {
+  selectedMode.value = modeId
 }
 
-const isTodayAvailable = computed(() => {
-  return isTimeSlotAvailable('今天', '早餐 8:00') || 
-         isTimeSlotAvailable('今天', '午餐 12:00') || 
-         isTimeSlotAvailable('今天', '晚餐 18:00')
-})
-
-const selectDate = (date) => {
-  if (date === '今天' && !isTodayAvailable.value) {
-    uni.showToast({ title: '今天已无可预订的时间段', icon: 'none' })
-    return
-  }
-  bookingDate.value = date
-  
-  // When switching date, make sure bookingTime is still valid for the selected date
-  if (!isTimeSlotAvailable(date, bookingTime.value)) {
-    // Select first available slot
-    if (isTimeSlotAvailable(date, '早餐 8:00')) {
-      bookingTime.value = '早餐 8:00'
-    } else if (isTimeSlotAvailable(date, '午餐 12:00')) {
-      bookingTime.value = '午餐 12:00'
-    } else {
-      bookingTime.value = '晚餐 18:00'
-    }
-  }
-}
-
-const selectTime = (time) => {
-  if (!isTimeSlotAvailable(bookingDate.value, time)) {
-    uni.showToast({ title: '该送餐时间需提前半小时预订', icon: 'none' })
-    return
-  }
-  bookingTime.value = time
-}
-
-const initBookingDateTime = () => {
-  if (isTodayAvailable.value) {
-    bookingDate.value = '今天'
-    if (isTimeSlotAvailable('今天', '早餐 8:00')) {
-      bookingTime.value = '早餐 8:00'
-    } else if (isTimeSlotAvailable('今天', '午餐 12:00')) {
-      bookingTime.value = '午餐 12:00'
-    } else {
-      bookingTime.value = '晚餐 18:00'
-    }
-  } else {
-    bookingDate.value = '明天'
-    bookingTime.value = '早餐 8:00'
-  }
-}
 const checkedAddress = ref(null)
 const contactName = ref('')
 const contactPhone = ref('')
@@ -247,6 +186,16 @@ const remark = ref('')
 const submitting = ref(false)
 const savedAddresses = ref([])
 const hasRedirectedForNoAddress = ref(false)
+
+const remarkPlaceholder = computed(() => {
+  if (selectedMode.value === 'pickup') {
+    return '请在此备注您预计到店自取的时间（至少提前半天）'
+  } else if (selectedMode.value === 'shier') {
+    return '请在此备注具体几区/几号楼'
+  } else if (selectedMode.value === 'shida') {
+    return '请在此备注具体哪栋楼/宿舍号'
+  }
+})
 
 const fullAddressText = computed(() => {
   if (!checkedAddress.value) return ''
@@ -298,8 +247,6 @@ const getCheckoutInfo = async () => {
 }
 
 onShow(async () => {
-  initBookingDateTime()
-  
   // 1. Read cached selected address ID if user selected from address management page
   const cachedAddressId = uni.getStorageSync('selectedAddressId')
   if (cachedAddressId) {
@@ -343,7 +290,7 @@ onShow(async () => {
       // If user has no address, redirect to address management page to add one
       if (!hasRedirectedForNoAddress.value) {
         hasRedirectedForNoAddress.value = true
-        uni.showToast({ title: '请先添加收货地址', icon: 'none' })
+        uni.showToast({ title: '请先添加联系地址', icon: 'none' })
         setTimeout(() => {
           onSelectAddress()
         }, 500)
@@ -357,23 +304,30 @@ onShow(async () => {
 
 const onSubmitOrder = async () => {
   // Form validations
-  if (!isTimeSlotAvailable(bookingDate.value, bookingTime.value)) {
-    uni.showToast({ title: '所选的送餐时间已失效，请重新选择', icon: 'none' })
-    return
-  }
   if (!checkedAddress.value || !addressId.value) {
-    uni.showToast({ title: '请先添加并选择收货地址', icon: 'none' })
+    uni.showToast({ title: '请先添加并选择联系地址', icon: 'none' })
     setTimeout(() => {
       onSelectAddress()
     }, 500)
     return
   }
 
+  if (selectedMode.value === 'pickup' && !remark.value.trim()) {
+    uni.showToast({ title: '到店自取请在备注中填写取餐时间', icon: 'none' })
+    return
+  }
+
   submitting.value = true
   try {
-    // Format custom booking info inside order message remark
+    // Format booking mode info inside order message remark
     const cleanRemark = remark.value.trim() ? remark.value.replace(/[\r\n|]/g, ' ').trim() : '无'
-    const messageValue = `[预约送餐] 时间:${bookingDate.value} ${bookingTime.value} | 称呼:${checkedAddress.value.name} | 电话:${checkedAddress.value.tel} | 备注:${cleanRemark}`
+    let messageValue = ''
+    if (selectedMode.value === 'pickup') {
+      messageValue = `[到店自取] 备注:${cleanRemark}`
+    } else {
+      const opt = bookingOptions.find(o => o.id === selectedMode.value) || bookingOptions[0]
+      messageValue = `[${opt.name} ${opt.time}] 备注:${cleanRemark}`
+    }
     
     // Submit order using chosen addressId
     const data = await request({
@@ -501,6 +455,109 @@ const onSubmitOrder = async () => {
   font-size: 22rpx;
   color: var(--text-muted);
   font-weight: 700;
+}
+
+/* Booking Options List */
+.booking-option-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.booking-option-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 28rpx;
+  background-color: #FAF6EE;
+  border-radius: 20rpx;
+  border: 2rpx solid rgba(230, 213, 184, 0.4);
+  transition: all 0.25s ease;
+  box-sizing: border-box;
+}
+
+.booking-option-item.active {
+  background-color: #FFFDF9;
+  border-color: #6F4E37;
+  box-shadow: 0 4rpx 14rpx rgba(111, 78, 55, 0.08);
+}
+
+.option-left {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.option-radio {
+  width: 38rpx;
+  height: 38rpx;
+  border-radius: 50%;
+  border: 3rpx solid #C4AFA5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #FFFFFF;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.booking-option-item.active .option-radio {
+  border-color: #6F4E37;
+}
+
+.radio-dot {
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+  background-color: #6F4E37;
+}
+
+.option-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.option-name {
+  font-size: 28rpx;
+  font-weight: 800;
+  color: #4A3525;
+}
+
+.option-tip {
+  font-size: 22rpx;
+  color: #E07A5F;
+  font-weight: 600;
+}
+
+.option-right {
+  display: flex;
+  align-items: center;
+}
+
+.option-time-badge {
+  font-size: 24rpx;
+  font-weight: 800;
+  color: #6F4E37;
+  background-color: rgba(111, 78, 55, 0.1);
+  padding: 6rpx 18rpx;
+  border-radius: 14rpx;
+}
+
+.booking-option-item.active .option-time-badge {
+  background-color: #6F4E37;
+  color: #FFFFFF;
+}
+
+.reminder-icon {
+  font-size: 26rpx;
+}
+
+.reminder-text {
+  font-size: 22rpx;
+  color: #E07A5F;
+  font-weight: 600;
+  line-height: 1.4;
 }
 
 /* Delivery Card Header & Switch Button */
@@ -663,14 +720,6 @@ const onSubmitOrder = async () => {
   color: #4A3525;
 }
 
-.form-input {
-  flex: 1;
-  height: 50rpx;
-  font-size: 26rpx;
-  color: #4A3525;
-  font-weight: 600;
-}
-
 .form-textarea {
   flex: 1;
   height: 120rpx;
@@ -681,44 +730,6 @@ const onSubmitOrder = async () => {
   padding: 16rpx;
   border: 1rpx solid rgba(230, 213, 184, 0.3);
   font-weight: 600;
-}
-
-.address-label {
-  margin-top: 12rpx;
-}
-
-/* Segmented Control (Date & Time Selector) */
-.segmented-control {
-  flex: 1;
-  display: flex;
-  background-color: #F5EEDF;
-  border-radius: 24rpx;
-  padding: 6rpx;
-  gap: 6rpx;
-}
-
-.segment-item {
-  flex: 1;
-  text-align: center;
-  height: 60rpx;
-  line-height: 60rpx;
-  font-size: 24rpx;
-  font-weight: bold;
-  color: #A18276;
-  border-radius: 20rpx;
-  transition: all 0.2s ease;
-}
-
-.segment-item.active {
-  background-color: #6F4E37;
-  color: #FFFFFF;
-  box-shadow: 0 4rpx 10rpx rgba(111, 78, 55, 0.15);
-}
-
-.segment-item.disabled {
-  color: #D2C2B9;
-  background-color: #EDE6D8;
-  opacity: 0.65;
 }
 
 /* Bill Cost card */

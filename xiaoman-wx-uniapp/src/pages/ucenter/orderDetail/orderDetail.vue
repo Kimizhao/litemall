@@ -30,17 +30,21 @@
 
         <!-- 预约自取信息项 -->
         <view class="info-list">
-          <view class="info-item">
+          <view class="info-item" v-if="pickupInfo.mode">
+            <text class="info-label">预订方式</text>
+            <text class="info-value highlight">{{ pickupInfo.mode }}</text>
+          </view>
+          <view class="info-item" v-else-if="pickupInfo.time">
             <text class="info-label">预约时间</text>
             <text class="info-value highlight">{{ pickupInfo.time }}</text>
           </view>
           <view class="info-item">
-            <text class="info-label">取餐姓名</text>
-            <text class="info-value">{{ pickupInfo.name }}</text>
+            <text class="info-label">联系姓名</text>
+            <text class="info-value">{{ pickupInfo.name || (orderInfo && orderInfo.consignee) || '' }}</text>
           </view>
           <view class="info-item">
             <text class="info-label">联系电话</text>
-            <text class="info-value">{{ pickupInfo.phone }}</text>
+            <text class="info-value">{{ pickupInfo.phone || (orderInfo && orderInfo.mobile) || '' }}</text>
           </view>
           <view class="info-item align-start">
             <text class="info-label">备注要求</text>

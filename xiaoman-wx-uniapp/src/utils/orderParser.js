@@ -1,25 +1,36 @@
 /**
- * 解析订单备注中的预约自取信息
+ * 解析订单备注中的预订/自取信息
  * @param {String} message 订单备注留言
  * @returns {Object|null} 解析成功返回预约对象，匹配失败返回null
  */
 export function parseOrderRemark(message) {
   if (!message || typeof message !== 'string') return null;
   try {
-    if (message.indexOf('[预约自取]') === -1) {
+    if (!message.startsWith('[')) {
       return null;
     }
-    const reg = /\[预约自取\] 时间:(.*?) \| 称呼:(.*?) \| 电话:(.*?) \| 备注:([\s\S]*?)$/;
-    const matches = message.match(reg);
-    if (matches && matches.length >= 5) {
-      return {
-        isPickup: true,
-        time: matches[1].trim(),
-        name: matches[2].trim(),
-        phone: matches[3].trim(),
-        remark: matches[4].trim()
-      };
-    }
+    
+    // 提取主要字段
+    const tagMatch = message.match(/^\[(.*?)\]/);
+    const tag = tagMatch ? tagMatch[1] : '';
+    
+    const modeMatch = message.match(/方式:(.*?)(?=\s*\|)/);
+    const timeMatch = message.match(/时间:(.*?)(?=\s*\|)/);
+    const nameMatch = message.match(/称呼:(.*?)(?=\s*\|)/);
+    const phoneMatch = message.match(/电话:(.*?)(?=\s*\|)/);
+    const remarkMatch = message.match(/备注:([\s\S]*?)$/);
+
+    const remarkText = remarkMatch ? remarkMatch[1].trim() : '';
+
+    return {
+      isPickup: true,
+      type: tag,
+      mode: modeMatch ? modeMatch[1].trim() : tag,
+      time: timeMatch ? timeMatch[1].trim() : '',
+      name: nameMatch ? nameMatch[1].trim() : '',
+      phone: phoneMatch ? phoneMatch[1].trim() : '',
+      remark: (remarkText === '无' || remarkText === '无备注') ? '' : remarkText
+    };
   } catch (e) {
     console.error('解析订单备注异常:', e);
   }
