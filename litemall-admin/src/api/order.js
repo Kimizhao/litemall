@@ -66,3 +66,26 @@ export function listChannel(id) {
     method: 'get'
   })
 }
+
+export function syncWxShipping(data) {
+  return request({
+    url: '/order/syncWxShipping',
+    method: 'post',
+    data
+  })
+}
+
+export function getWxShippingStatus(orderId) {
+  return request({
+    url: '/order/wxShippingStatus',
+    method: 'get',
+    params: { orderId }
+  })
+}
+
+export function getWxDeliveryList() {
+  return request({
+    url: '/order/wxDeliveryList',
+    method: 'get'
+  })
+}

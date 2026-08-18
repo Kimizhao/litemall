@@ -12,6 +12,7 @@ import org.linlinjava.litemall.core.notify.NotifyType;
 import org.linlinjava.litemall.core.util.DateTimeUtil;
 import org.linlinjava.litemall.core.util.JacksonUtil;
 import org.linlinjava.litemall.core.util.ResponseUtil;
+import org.linlinjava.litemall.core.wx.WxShippingService;
 import org.linlinjava.litemall.db.domain.*;
 import org.linlinjava.litemall.db.service.*;
 import org.linlinjava.litemall.db.util.CouponUserConstant;
@@ -56,6 +57,8 @@ public class AdminOrderService {
     private LitemallCouponUserService couponUserService;
     @Autowired
     private org.linlinjava.litemall.core.printer.LitemallPrinterClient printerClient;
+    @Autowired
+    private WxShippingService wxShippingService;
 
     public Object list(String nickname, String consignee, String orderSn, LocalDateTime start, LocalDateTime end, List<Short> orderStatusArray,
                        Integer page, Integer limit, String sort, String order) {
@@ -187,18 +190,46 @@ public class AdminOrderService {
      * 发货
      * 1. 检测当前订单是否能够发货
      * 2. 设置订单发货状态
+     * 3. 联动微信小程序发货信息管理接口 (upload_shipping_info)
      *
-     * @param body 订单信息，{ orderId：xxx, shipSn: xxx, shipChannel: xxx }
+     * @param body 订单信息，{ orderId：xxx, shipSn: xxx, shipChannel: xxx, logisticsType: xxx }
      * @return 订单操作结果
-     * 成功则 { errno: 0, errmsg: '成功' }
+     * 成功则 { errno: 0, errmsg: '成功', data: { wxShipping: ... } }
      * 失败则 { errno: XXX, errmsg: XXX }
      */
     public Object ship(String body) {
         Integer orderId = JacksonUtil.parseInteger(body, "orderId");
         String shipSn = JacksonUtil.parseString(body, "shipSn");
         String shipChannel = JacksonUtil.parseString(body, "shipChannel");
-        if (orderId == null || shipSn == null || shipChannel == null) {
+        Integer logisticsType = JacksonUtil.parseInteger(body, "logisticsType");
+
+        if (orderId == null) {
             return ResponseUtil.badArgument();
+        }
+
+        // 默认物流模式判断: 1快递, 2同城配送, 3虚拟商品, 4用户自提 (默认优先为同城配送)
+        if (logisticsType == null || logisticsType < 1 || logisticsType > 4) {
+            logisticsType = 2; // 默认同城配送
+        }
+
+        // 快递模式必须有快递公司和单号；其他模式如未填则给默认值
+        if (logisticsType == 1) {
+            if (!StringUtils.hasText(shipSn) || !StringUtils.hasText(shipChannel)) {
+                return ResponseUtil.badArgument();
+            }
+        } else {
+            if (!StringUtils.hasText(shipChannel)) {
+                if (logisticsType == 2) {
+                    shipChannel = "同城配送";
+                } else if (logisticsType == 4) {
+                    shipChannel = "到店自提";
+                } else {
+                    shipChannel = "无需物流";
+                }
+            }
+            if (!StringUtils.hasText(shipSn)) {
+                shipSn = "NONE";
+            }
         }
 
         LitemallOrder order = orderService.findById(orderId);
@@ -219,13 +250,135 @@ public class AdminOrderService {
             return ResponseUtil.updatedDateExpired();
         }
 
-        //TODO 发送邮件和短信通知，这里采用异步发送
-        // 发货会发送通知短信给用户:          *
-        // "您的订单已经发货，快递公司 {1}，快递单 {2} ，请注意查收"
-        notifyService.notifySmsTemplate(order.getMobile(), NotifyType.SHIP, new String[]{shipChannel, shipSn});
+        // 异步发送短信通知
+        if (StringUtils.hasText(order.getMobile())) {
+            notifyService.notifySmsTemplate(order.getMobile(), NotifyType.SHIP, new String[]{shipChannel, shipSn});
+        }
 
         logHelper.logOrderSucceed("发货", "订单编号 " + order.getOrderSn());
-        return ResponseUtil.ok();
+
+        // 微信小程序发货信息管理接口联动上报
+        Map<String, Object> wxShippingResult = null;
+        try {
+            LitemallUser user = userService.findById(order.getUserId());
+            String openid = (user != null) ? user.getWeixinOpenid() : null;
+            String itemDesc = buildItemDesc(order.getId());
+            wxShippingResult = wxShippingService.uploadShippingInfo(
+                    order.getOrderSn(),
+                    order.getPayId(),
+                    openid,
+                    logisticsType,
+                    shipChannel,
+                    shipSn,
+                    itemDesc,
+                    order.getMobile()
+            );
+            logger.info("订单发货微信同步结果 orderSn=" + order.getOrderSn() + ": " + wxShippingResult);
+        } catch (Exception e) {
+            logger.error("微信发货上报异常: " + e.getMessage(), e);
+        }
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("wxShipping", wxShippingResult);
+        return ResponseUtil.ok(data);
+    }
+
+    /**
+     * 手动重新同步微信小程序发货信息
+     */
+    public Object syncWxShipping(String body) {
+        Integer orderId = JacksonUtil.parseInteger(body, "orderId");
+        Integer logisticsType = JacksonUtil.parseInteger(body, "logisticsType");
+        String shipSn = JacksonUtil.parseString(body, "shipSn");
+        String shipChannel = JacksonUtil.parseString(body, "shipChannel");
+
+        if (orderId == null) {
+            return ResponseUtil.badArgument();
+        }
+        LitemallOrder order = orderService.findById(orderId);
+        if (order == null) {
+            return ResponseUtil.badArgument();
+        }
+
+        if (!StringUtils.hasText(shipSn)) {
+            shipSn = order.getShipSn();
+        }
+        if (!StringUtils.hasText(shipChannel)) {
+            shipChannel = order.getShipChannel();
+        }
+
+        LitemallUser user = userService.findById(order.getUserId());
+        String openid = (user != null) ? user.getWeixinOpenid() : null;
+        String itemDesc = buildItemDesc(order.getId());
+
+        Map<String, Object> wxResult = wxShippingService.uploadShippingInfo(
+                order.getOrderSn(),
+                order.getPayId(),
+                openid,
+                logisticsType,
+                shipChannel,
+                shipSn,
+                itemDesc,
+                order.getMobile()
+        );
+
+        return ResponseUtil.ok(wxResult);
+    }
+
+    /**
+     * 查询订单在微信侧的发货与收货状态
+     */
+    public Object getWxShippingStatus(Integer orderId) {
+        if (orderId == null) {
+            return ResponseUtil.badArgument();
+        }
+        LitemallOrder order = orderService.findById(orderId);
+        if (order == null) {
+            return ResponseUtil.badArgument();
+        }
+
+        Map<String, Object> shippingInfo = wxShippingService.getOrderShippingInfo(order.getPayId(), order.getOrderSn());
+        Map<String, Object> managedInfo = wxShippingService.isTradeManaged();
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("shippingInfo", shippingInfo);
+        data.put("managedInfo", managedInfo);
+        return ResponseUtil.ok(data);
+    }
+
+    /**
+     * 获取微信官方支持的运力公司列表
+     */
+    public Object getWxDeliveryList() {
+        return ResponseUtil.ok(wxShippingService.getDeliveryList());
+    }
+
+    /**
+     * 构建商品简短描述 (最多120字)
+     */
+    private String buildItemDesc(Integer orderId) {
+        try {
+            List<LitemallOrderGoods> goodsList = orderGoodsService.queryByOid(orderId);
+            if (goodsList != null && !goodsList.isEmpty()) {
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < goodsList.size(); i++) {
+                    if (i > 0) sb.append("; ");
+                    LitemallOrderGoods g = goodsList.get(i);
+                    sb.append(g.getGoodsName());
+                    if (g.getNumber() != null && g.getNumber() > 1) {
+                        sb.append("x").append(g.getNumber());
+                    }
+                    if (sb.length() > 90) {
+                        sb.append(" 等");
+                        break;
+                    }
+                }
+                return sb.toString();
+            }
+        } catch (Exception e) {
+            logger.error("构建商品描述异常: " + e.getMessage(), e);
+        }
+        return "小满食光商品";
     }
 
     /**

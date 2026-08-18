@@ -94,7 +94,7 @@ public class AdminOrderController {
     /**
      * 发货
      *
-     * @param body 订单信息，{ orderId：xxx, shipSn: xxx, shipChannel: xxx }
+     * @param body 订单信息，{ orderId：xxx, shipSn: xxx, shipChannel: xxx, logisticsType: xxx }
      * @return 订单操作结果
      */
     @RequiresPermissions("admin:order:ship")
@@ -102,6 +102,35 @@ public class AdminOrderController {
     @PostMapping("/ship")
     public Object ship(@RequestBody String body) {
         return adminOrderService.ship(body);
+    }
+
+    /**
+     * 手动同步微信小程序发货信息
+     */
+    @RequiresPermissions("admin:order:ship")
+    @RequiresPermissionsDesc(menu = {"商场管理", "订单管理"}, button = "同步微信发货")
+    @PostMapping("/syncWxShipping")
+    public Object syncWxShipping(@RequestBody String body) {
+        return adminOrderService.syncWxShipping(body);
+    }
+
+    /**
+     * 查询微信发货管理状态与订单详情
+     */
+    @RequiresPermissions("admin:order:read")
+    @RequiresPermissionsDesc(menu = {"商场管理", "订单管理"}, button = "微信发货状态")
+    @GetMapping("/wxShippingStatus")
+    public Object wxShippingStatus(@NotNull Integer orderId) {
+        return adminOrderService.getWxShippingStatus(orderId);
+    }
+
+    /**
+     * 获取微信官方运力列表
+     */
+    @RequiresPermissions("admin:order:read")
+    @GetMapping("/wxDeliveryList")
+    public Object wxDeliveryList() {
+        return adminOrderService.getWxDeliveryList();
     }
 
     @RequiresPermissions("admin:order:pay")

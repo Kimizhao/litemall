@@ -157,6 +157,15 @@
             <span>{{ $t('mall_order.text.detail_ship_sn', { ship_sn: orderDetail.order.shipSn }) }}</span>
             <span>{{ $t('mall_order.text.detail_ship_time', { ship_time: orderDetail.order.shipTime }) }}</span>
           </el-form-item>
+          <el-form-item label="微信发货管理">
+            <el-button type="primary" size="mini" :loading="wxLoading" @click="handleQueryWxStatus(orderDetail.order.id)">查询微信状态</el-button>
+            <el-button type="warning" size="mini" :loading="wxLoading" @click="handleSyncWxShipping(orderDetail.order)">同步微信发货</el-button>
+            <div v-if="wxShippingInfo" style="margin-top: 8px; padding: 8px 12px; background: #f8f9fa; border: 1px solid #ebeef5; border-radius: 4px; font-size: 13px; line-height: 1.8;">
+              <div><strong>交易管理监管:</strong> <el-tag size="mini" :type="wxManagedInfo && wxManagedInfo.isTradeManaged ? 'success' : 'info'">{{ wxManagedInfo && wxManagedInfo.isTradeManaged ? '已纳入监管' : '普通模式' }}</el-tag></div>
+              <div><strong>微信上报状态:</strong> {{ wxShippingInfo.errcode === 0 ? '已同步' : (wxShippingInfo.errmsg || '未同步/异常') }}</div>
+              <div v-if="wxShippingInfo.order"><strong>微信订单状态:</strong> {{ wxShippingInfo.order.order_state_desc || JSON.stringify(wxShippingInfo.order) }}</div>
+            </div>
+          </el-form-item>
           <el-form-item :label="$t('mall_order.form.detail_refund_info')">
             <span>{{ $t('mall_order.text.detail_refund_amount', { refund_amount: orderDetail.order.refundAmount }) }}</span>
             <span>{{ $t('mall_order.text.detail_refund_type', { refund_type: orderDetail.order.refundType }) }}</span>
@@ -195,11 +204,6 @@
           </template>
         </el-table-column>
         <el-table-column property="onumber" width="100" :label="$t('mall_order.table.pay_goods_number')" />
-        <!-- <el-table-column label="实际数量" width="100">
-          <template slot-scope="scope">
-            <el-input-number v-model="scope.row.number" :min="0" :controls="false" />
-          </template>
-        </el-table-column> -->
       </el-table>
       <div slot="footer" class="dialog-footer">
         <el-button @click="payDialogVisible = false">{{ $t('app.button.cancel') }}</el-button>
@@ -209,15 +213,29 @@
 
     <!-- 发货对话框 -->
     <el-dialog :visible.sync="shipDialogVisible" :title="$t('mall_order.dialog.ship')">
-      <el-form ref="shipForm" :model="shipForm" status-icon label-position="left" label-width="100px" style="width: 400px; margin-left:50px;">
-        <el-form-item :label="$t('mall_order.form.ship_channel')" prop="shipChannel">
+      <el-form ref="shipForm" :model="shipForm" status-icon label-position="left" label-width="110px" style="width: 440px; margin-left:30px;">
+        <el-form-item label="发货类型" prop="logisticsType">
+          <el-radio-group v-model="shipForm.logisticsType">
+            <el-radio :label="1">快递配送</el-radio>
+            <el-radio :label="2">同城配送</el-radio>
+            <el-radio :label="4">到店自提</el-radio>
+            <el-radio :label="3">虚拟发货</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item v-if="shipForm.logisticsType === 1" :label="$t('mall_order.form.ship_channel')" prop="shipChannel" :rules="[{ required: true, message: '请选择快递公司', trigger: 'change' }]">
           <el-select v-model="shipForm.shipChannel" :placeholder="$t('mall_order.placeholder.ship_channel')">
             <el-option v-for="item in channels" :key="item.code" :label="item.name" :value="item.code" />
           </el-select>
         </el-form-item>
-        <el-form-item :label="$t('mall_order.form.ship_sn')" prop="shipSn">
-          <el-input v-model="shipForm.shipSn" />
+        <el-form-item v-if="shipForm.logisticsType === 1" :label="$t('mall_order.form.ship_sn')" prop="shipSn" :rules="[{ required: true, message: '请输入快递单号', trigger: 'blur' }]">
+          <el-input v-model="shipForm.shipSn" placeholder="请输入快递单号" />
         </el-form-item>
+        <el-form-item v-else-if="shipForm.logisticsType === 2" label="配送方式">
+          <el-input v-model="shipForm.shipChannel" placeholder="同城专送 / 商家自送 (选填)" />
+        </el-form-item>
+        <div style="color: #909399; font-size: 12px; margin-left: 110px; margin-bottom: 10px;">
+          * 发货后将自动同步至微信小程序发货管理平台
+        </div>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="shipDialogVisible = false">{{ $t('app.button.cancel') }}</el-button>
@@ -287,7 +305,7 @@
 </style>
 
 <script>
-import { detailOrder, listOrder, listChannel, refundOrder, payOrder, deleteOrder, shipOrder } from '@/api/order'
+import { detailOrder, listOrder, listChannel, refundOrder, payOrder, deleteOrder, shipOrder, syncWxShipping, getWxShippingStatus } from '@/api/order'
 import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
 import checkPermission from '@/utils/permission' // 权限判断函数
 
@@ -363,7 +381,8 @@ export default {
       },
       shipForm: {
         orderId: undefined,
-        shipChannel: undefined,
+        logisticsType: 2,
+        shipChannel: '同城配送',
         shipSn: undefined
       },
       shipDialogVisible: false,
@@ -381,7 +400,10 @@ export default {
       },
       refundDialogVisible: false,
       downloadLoading: false,
-      channels: []
+      channels: [],
+      wxShippingInfo: null,
+      wxManagedInfo: null,
+      wxLoading: false
     }
   },
   created() {
@@ -434,10 +456,54 @@ export default {
       this.getList()
     },
     handleDetail(row) {
+      this.wxShippingInfo = null
+      this.wxManagedInfo = null
       detailOrder(row.id).then(response => {
         this.orderDetail = response.data.data
       })
       this.orderDialogVisible = true
+    },
+    handleQueryWxStatus(orderId) {
+      this.wxLoading = true
+      getWxShippingStatus(orderId).then(response => {
+        this.wxShippingInfo = response.data.data.shippingInfo
+        this.wxManagedInfo = response.data.data.managedInfo
+        this.$message.success('查询微信发货状态成功')
+      }).catch(err => {
+        this.$notify.error({
+          title: '查询失败',
+          message: (err.data && err.data.errmsg) ? err.data.errmsg : '微信发货状态查询失败'
+        })
+      }).finally(() => {
+        this.wxLoading = false
+      })
+    },
+    handleSyncWxShipping(order) {
+      this.$confirm('确定将该订单发货信息重新上报到微信发货管理吗？', '提示', {
+        type: 'warning'
+      }).then(() => {
+        this.wxLoading = true
+        syncWxShipping({
+          orderId: order.id,
+          shipSn: order.shipSn,
+          shipChannel: order.shipChannel
+        }).then(response => {
+          const res = response.data.data
+          if (res && res.success) {
+            this.$message.success('同步微信发货成功')
+          } else {
+            this.$message.warning('微信返回: ' + (res ? res.errmsg : '未知响应'))
+          }
+          this.handleQueryWxStatus(order.id)
+        }).catch(err => {
+          this.$notify.error({
+            title: '同步失败',
+            message: (err.data && err.data.errmsg) ? err.data.errmsg : '同步微信发货失败'
+          })
+        }).finally(() => {
+          this.wxLoading = false
+        })
+      }).catch(() => {})
     },
     handlePay(row) {
       this.payForm.orderId = row.id
@@ -480,8 +546,9 @@ export default {
     },
     handleShip(row) {
       this.shipForm.orderId = row.id
-      this.shipForm.shipChannel = row.shipChannel
-      this.shipForm.shipSn = row.shipSn
+      this.shipForm.logisticsType = 2
+      this.shipForm.shipChannel = row.shipChannel || '同城配送'
+      this.shipForm.shipSn = row.shipSn || ''
 
       this.shipDialogVisible = true
       this.$nextTick(() => {
@@ -493,10 +560,18 @@ export default {
         if (valid) {
           shipOrder(this.shipForm).then(response => {
             this.shipDialogVisible = false
-            this.$notify.success({
-              title: '成功',
-              message: '确认发货成功'
-            })
+            const wxRes = response.data.data && response.data.data.wxShipping
+            if (wxRes && !wxRes.success) {
+              this.$notify.warning({
+                title: '内部发货成功 (微信上报有提示)',
+                message: '微信返回: ' + (wxRes.errmsg || '上报受阻，可在订单详情中手动重新同步')
+              })
+            } else {
+              this.$notify.success({
+                title: '成功',
+                message: '确认发货成功，已同步微信发货管理'
+              })
+            }
             this.getList()
           }).catch(response => {
             this.$notify.error({
