@@ -18,7 +18,8 @@ export async function payOrder(orderId) {
     const payParam = await request({
       url: api.OrderPrepay,
       method: 'POST',
-      data: { orderId: parseInt(orderId) }
+      data: { orderId: parseInt(orderId) },
+      noToast: true
     })
 
     uni.hideLoading()
@@ -30,11 +31,12 @@ export async function payOrder(orderId) {
     // 小程序原生支付唤起
     // #ifdef MP-WEIXIN
     return new Promise((resolve) => {
+      const pkg = payParam.packageValue || payParam.package || (payParam.prepayId ? `prepay_id=${payParam.prepayId}` : '')
       uni.requestPayment({
         provider: 'wxpay',
-        timeStamp: payParam.timeStamp,
+        timeStamp: String(payParam.timeStamp),
         nonceStr: payParam.nonceStr,
-        package: payParam.packageValue || payParam.package,
+        package: pkg,
         signType: payParam.signType || 'MD5',
         paySign: payParam.paySign,
         success: () => {
@@ -50,7 +52,7 @@ export async function payOrder(orderId) {
           console.warn('微信支付失败/取消:', res)
           const isCancel = res && (res.errMsg && (res.errMsg.indexOf('cancel') >= 0 || res.errMsg.indexOf('Cancel') >= 0))
           uni.showToast({
-            title: isCancel ? '已取消支付' : (res.errMsg || '支付失败'),
+            title: isCancel ? '已取消支付' : '支付未完成',
             icon: 'none'
           })
           setTimeout(() => {
@@ -64,30 +66,19 @@ export async function payOrder(orderId) {
     })
     // #endif
 
-    // 非微信小程序环境（H5 或 开发环境降级逻辑）
+    // 非微信小程序环境（H5 或 调试环境降级逻辑）
     // #ifndef MP-WEIXIN
     return new Promise((resolve) => {
       uni.showModal({
         title: '在线支付提示',
-        content: '当前环境不是微信小程序原生环境，是否模拟完成支付？',
-        confirmText: '模拟支付',
-        cancelText: '取消',
-        success: (res) => {
-          if (res.confirm) {
-            uni.setStorageSync('mock_paid_order_' + orderId, true)
-            uni.showToast({ title: '模拟支付成功', icon: 'success' })
-            setTimeout(() => {
-              uni.redirectTo({
-                url: `/pages/payResult/payResult?status=true&orderId=${orderId}`
-              })
-              resolve(true)
-            }, 600)
-          } else {
-            uni.redirectTo({
-              url: `/pages/payResult/payResult?status=false&orderId=${orderId}`
-            })
-            resolve(false)
-          }
+        content: '当前为非微信小程序原生环境，无法调起微信支付，可查看订单详情。',
+        confirmText: '查看订单',
+        showCancel: false,
+        success: () => {
+          uni.redirectTo({
+            url: `/pages/payResult/payResult?status=false&orderId=${orderId}`
+          })
+          resolve(false)
         }
       })
     })
@@ -101,26 +92,15 @@ export async function payOrder(orderId) {
     
     return new Promise((resolve) => {
       uni.showModal({
-        title: '支付发起提示',
-        content: `${errmsg}\n\n（提示：若未配置真实微信商户号或OpenID，可使用模拟支付体验流程）`,
-        confirmText: '模拟支付',
-        cancelText: '稍后支付',
-        success: (res) => {
-          if (res.confirm) {
-            uni.setStorageSync('mock_paid_order_' + orderId, true)
-            uni.showToast({ title: '模拟支付成功', icon: 'success' })
-            setTimeout(() => {
-              uni.redirectTo({
-                url: `/pages/payResult/payResult?status=true&orderId=${orderId}`
-              })
-              resolve(true)
-            }, 600)
-          } else {
-            uni.redirectTo({
-              url: `/pages/payResult/payResult?status=false&orderId=${orderId}`
-            })
-            resolve(false)
-          }
+        title: '支付提示',
+        content: `${errmsg}，请在订单详情页继续支付。`,
+        confirmText: '查看订单',
+        showCancel: false,
+        success: () => {
+          uni.redirectTo({
+            url: `/pages/payResult/payResult?status=false&orderId=${orderId}`
+          })
+          resolve(false)
         }
       })
     })

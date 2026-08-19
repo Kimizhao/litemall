@@ -16,15 +16,15 @@
       <!-- Province / City / County -->
       <view class="input-row">
         <text class="label">省份</text>
-        <input type="text" class="form-input" v-model="address.province" placeholder="如：浙江省" />
+        <input type="text" class="form-input" v-model="address.province" placeholder="如：福建省" />
       </view>
       <view class="input-row">
         <text class="label">城市</text>
-        <input type="text" class="form-input" v-model="address.city" placeholder="如：杭州市" />
+        <input type="text" class="form-input" v-model="address.city" placeholder="如：福州市" />
       </view>
       <view class="input-row">
         <text class="label">区县</text>
-        <input type="text" class="form-input" v-model="address.county" placeholder="如：西湖区" />
+        <input type="text" class="form-input" v-model="address.county" placeholder="如：仓山区" />
       </view>
 
       <!-- Detailed Address -->
@@ -73,8 +73,9 @@ const address = ref({
 const submitting = ref(false)
 
 onLoad((options) => {
-  if (options.id) {
+  if (options && options.id) {
     addressId.value = parseInt(options.id)
+    getAddressDetail()
   }
 })
 

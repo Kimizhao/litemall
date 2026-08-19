@@ -13,19 +13,6 @@
 
     <!-- TAB 1: WeChat One-Click & Other Number Login -->
     <block v-if="activeTab === 'main'">
-      <!-- Agreement Checkbox -->
-      <view class="agreement-wrapper">
-        <label class="checkbox-label" @tap="toggleAgreement">
-          <checkbox :checked="agreed" color="#6F4E37" style="transform: scale(0.8);" />
-          <view class="agreement-text">
-            我已认真阅读、理解并同意
-            <text class="agreement-link" @tap.stop="openDoc('service')">《用户协议》</text>
-            和
-            <text class="agreement-link" @tap.stop="openDoc('privacy')">《隐私协议》</text>
-            ，登录后自动绑定当前微信
-          </view>
-        </label>
-      </view>
 
       <!-- Action Buttons -->
       <view class="button-group">
@@ -39,13 +26,27 @@
           手机号快捷登录
         </button>
         
-        <button class="action-btn secondary" @tap="activeTab = 'sms'">
+        <!-- <button class="action-btn secondary" @tap="activeTab = 'sms'">
           验证码登录
-        </button>
+        </button> -->
 
-        <button class="action-btn secondary" @tap="activeTab = 'account'">
+        <!-- <button class="action-btn secondary" @tap="activeTab = 'account'">
           账号密码登录
-        </button>
+        </button> -->
+      </view>
+
+      <!-- Agreement Checkbox -->
+      <view class="agreement-wrapper">
+        <label class="checkbox-label" @tap="toggleAgreement">
+          <checkbox :checked="agreed" color="#6F4E37" style="transform: scale(0.8);" />
+          <view class="agreement-text">
+            我已认真阅读、理解并同意
+            <text class="agreement-link" @tap.stop="openDoc('service')">《用户协议》</text>
+            和
+            <text class="agreement-link" @tap.stop="openDoc('privacy')">《隐私协议》</text>
+            ，登录后自动绑定当前微信
+          </view>
+        </label>
       </view>
 
       <!-- Footer action -->

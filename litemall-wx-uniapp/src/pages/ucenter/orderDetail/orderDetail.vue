@@ -162,7 +162,7 @@ const onGoodsTap = (id) => {
 const onCancelOrder = () => {
   uni.showModal({
     title: '取消订单',
-    content: '您确定要取消该手作订单吗？',
+    content: '您确定要取消订单吗？',
     confirmText: '取消订单',
     cancelText: '取消',
     confirmColor: '#ef4444',
@@ -193,7 +193,7 @@ const onPayOrder = () => {
 const onConfirmReceipt = () => {
   uni.showModal({
     title: '确认收货',
-    content: '您已收到心仪的手作商品了吗？确认后将打款给独立手艺人。',
+    content: '您已收到商品了吗？',
     confirmText: '确认收货',
     cancelText: '取消',
     confirmColor: '#10b981',

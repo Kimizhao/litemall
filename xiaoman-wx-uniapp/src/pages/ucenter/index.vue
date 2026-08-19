@@ -230,7 +230,7 @@ const onGetPhoneNumber = async (e) => {
 const onLogout = () => {
   uni.showModal({
     title: '退出登录',
-    content: '您确定要退出当前登录的账号吗？',
+    content: '您确定要退出吗？',
     confirmText: '确定',
     cancelText: '取消',
     confirmColor: '#6F4E37',

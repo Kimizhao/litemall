@@ -4,9 +4,18 @@
       <!-- Order Status Banner -->
       <view class="status-banner" :class="'bg-' + orderInfo.orderStatus">
         <text class="status-text">{{ orderInfo.orderStatusText }}</text>
-        <text class="status-desc" v-if="orderInfo.orderStatus === 101">请尽快完成支付</text>
+        <text class="status-desc" v-if="orderInfo.orderStatus === 101">订单已提交，请尽快完成支付</text>
         <text class="status-desc" v-else-if="orderInfo.orderStatus === 201">
-          {{ pickupInfo ? '请凭取餐号到店自取，小满食光正在加紧打包中' : '正在加紧打包中，请耐心等待' }}
+          {{ pickupInfo ? '已付款，请凭取餐号到店自取，小满食光正在加紧制作中' : '已付款，正在加紧打包中，请耐心等待' }}
+        </text>
+        <text class="status-desc" v-else-if="orderInfo.orderStatus === 301">
+          {{ pickupInfo ? '餐品已制作完成，请凭取餐号前往门店取餐' : '已发货配送中，请保持手机畅通' }}
+        </text>
+        <text class="status-desc" v-else-if="orderInfo.orderStatus === 401 || orderInfo.orderStatus === 402">
+          订单已完成，感谢您的光临！
+        </text>
+        <text class="status-desc" v-else-if="orderInfo.orderStatus === 102 || orderInfo.orderStatus === 103">
+          订单已取消
         </text>
       </view>
 
@@ -21,8 +30,8 @@
         <view class="pickup-code-section">
           <text class="code-label">取餐号</text>
           <text class="code-number">{{ pickupCode }}</text>
-          <text class="code-status" :class="{ paid: orderInfo.orderStatus !== 101 }">
-            {{ orderInfo.orderStatus !== 101 ? '已付款 · 待取餐' : '等待门店支付' }}
+          <text class="code-status" :class="{ paid: isOrderPaid, unpaid: !isOrderPaid }">
+            {{ getPickupStatusText(orderInfo.orderStatus) }}
           </text>
         </view>
 
@@ -161,8 +170,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { ref, computed } from 'vue'
+import { onLoad, onShow } from '@dcloudio/uni-app'
 import request from '../../../utils/request'
 import api from '../../../config/api'
 import { parseOrderRemark, generatePickupCode } from '../../../utils/orderParser'
@@ -174,13 +183,42 @@ const orderGoods = ref([])
 const pickupInfo = ref(null)
 const pickupCode = ref('')
 
+const isOrderPaid = computed(() => {
+  if (!orderInfo.value || !orderInfo.value.orderStatus) return false
+  const s = Number(orderInfo.value.orderStatus)
+  return s !== 101 && s !== 102 && s !== 103
+})
+
+const getPickupStatusText = (status) => {
+  const s = Number(status)
+  if (s === 101) return '待付款 · 待支付'
+  if (s === 201) return '已付款 · 制作中'
+  if (s === 301) return '已制作 · 待取餐'
+  if (s === 401 || s === 402) return '已完成'
+  if (s === 102 || s === 103) return '已取消'
+  return '处理中'
+}
+
+const loadData = (options) => {
+  const id = (options && (options.id || options.orderId)) || orderId.value
+  if (id) {
+    orderId.value = parseInt(id)
+    getOrderDetail()
+  }
+}
+
 onLoad((options) => {
-  if (options.id) {
-    orderId.value = parseInt(options.id)
+  loadData(options)
+})
+
+onShow(() => {
+  if (orderId.value) {
+    getOrderDetail()
   }
 })
 
 const getOrderDetail = async () => {
+  if (!orderId.value) return
   try {
     const data = await request({
       url: `${api.OrderDetail}?orderId=${orderId.value}`,
@@ -192,23 +230,13 @@ const getOrderDetail = async () => {
       orderGoods.value = data.orderGoods || []
       
       if (orderInfo.value) {
-        // 状态覆写层：若后端订单状态为 101（未付款）且本地存在已模拟支付标记，则将前台的渲染状态强制修改为 201（已付款）
-        const isPaid = uni.getStorageSync('mock_paid_order_' + orderId.value)
-        if (isPaid === true && orderInfo.value.orderStatus === 101) {
-          orderInfo.value.orderStatus = 201
-          orderInfo.value.orderStatusText = '已付款'
-          if (orderInfo.value.handleOption) {
-            orderInfo.value.handleOption.pay = false
-          }
-        }
-        
         // 解析备注
         const message = orderInfo.value.message || ''
         const parsed = parseOrderRemark(message)
         if (parsed) {
           pickupInfo.value = parsed
           pickupCode.value = generatePickupCode(orderId.value)
-          if (orderInfo.value.orderStatus === 201) {
+          if (orderInfo.value.orderStatus === 201 || orderInfo.value.orderStatus === 301) {
             if (!orderInfo.value.handleOption) {
               orderInfo.value.handleOption = {}
             }
@@ -235,9 +263,10 @@ const onGoodsTap = (id) => {
 }
 
 const onCancelOrder = () => {
+  if (!orderId.value) return
   uni.showModal({
     title: '取消订单',
-    content: '您确定要取消该手作订单吗？',
+    content: '您确定要取消订单吗？',
     confirmText: '取消订单',
     cancelText: '取消',
     confirmColor: '#ef4444',
@@ -260,6 +289,7 @@ const onCancelOrder = () => {
 }
 
 const onPayOrder = async () => {
+  if (!orderId.value) return
   const success = await payOrder(orderId.value)
   if (success) {
     getOrderDetail()
@@ -267,10 +297,11 @@ const onPayOrder = async () => {
 }
 
 const onConfirmReceipt = () => {
+  if (!orderId.value) return
   const isPickup = !!pickupInfo.value
   uni.showModal({
     title: isPickup ? '确认取餐' : '确认收货',
-    content: isPickup ? '您已拿到预订的手作美味了吗？确认后订单将完成。' : '您已收到心仪的手作商品了吗？确认后将打款给独立手艺人。',
+    content: isPickup ? '您已拿到预订的商品了吗？确认后订单将完成。' : '您已收到商品了吗？',
     confirmText: isPickup ? '确认取餐' : '确认收货',
     cancelText: '取消',
     confirmColor: '#8B8E4B',
@@ -291,12 +322,6 @@ const onConfirmReceipt = () => {
     }
   })
 }
-
-onMounted(() => {
-  if (orderId.value) {
-    getOrderDetail()
-  }
-})
 </script>
 
 <style scoped>
@@ -669,6 +694,11 @@ onMounted(() => {
 .code-status.paid {
   color: #FFFFFF;
   background-color: #6F4E37;
+}
+
+.code-status.unpaid {
+  color: #FFFFFF;
+  background-color: #E07A5F;
 }
 
 .dashed-line {

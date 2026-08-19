@@ -345,6 +345,12 @@ const onSubmitOrder = async () => {
     })
     
     if (data && data.orderId) {
+      if (data.payed) {
+        uni.redirectTo({
+          url: `/pages/payResult/payResult?status=true&orderId=${data.orderId}`
+        })
+        return
+      }
       await payOrder(data.orderId)
     } else {
       uni.navigateTo({
@@ -354,7 +360,7 @@ const onSubmitOrder = async () => {
   } catch (err) {
     console.error('Submit order failed:', err)
     uni.showToast({
-      title: err.message || '提交失败，请重试',
+      title: (err && (err.errmsg || err.message)) || '提交失败，请重试',
       icon: 'none'
     })
   } finally {

@@ -89,26 +89,32 @@ export default function request(options) {
             })
             reject(data)
           } else {
-            uni.showToast({
-              title: data.errmsg || 'Request Error',
-              icon: 'none',
-              duration: 2000
-            })
+            if (!options.noToast && !options.hideErrorToast) {
+              uni.showToast({
+                title: data.errmsg || 'Request Error',
+                icon: 'none',
+                duration: 2000
+              })
+            }
             reject(data)
           }
         } else {
-          uni.showToast({
-            title: `HTTP ${res.statusCode} Error`,
-            icon: 'none'
-          })
+          if (!options.noToast && !options.hideErrorToast) {
+            uni.showToast({
+              title: `HTTP ${res.statusCode} Error`,
+              icon: 'none'
+            })
+          }
           reject(res)
         }
       },
       fail: (err) => {
-        uni.showToast({
-          title: 'Network Timeout',
-          icon: 'none'
-        })
+        if (!options.noToast && !options.hideErrorToast) {
+          uni.showToast({
+            title: 'Network Timeout',
+            icon: 'none'
+          })
+        }
         reject(err)
       }
     })

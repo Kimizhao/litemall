@@ -149,22 +149,13 @@ const getOrderList = async (reset = false) => {
     if (data) {
       let list = data.list || []
       list = list.map(order => {
-        const isPaid = uni.getStorageSync('mock_paid_order_' + order.id)
-        if (isPaid === true && order.orderStatus === 101) {
-          order.orderStatus = 201
-          order.orderStatusText = '已付款'
-          if (order.handleOption) {
-            order.handleOption.pay = false
-          }
-        }
-        
         const isPickup = order.message && (
           order.message.indexOf('[预约自取]') !== -1 || 
           order.message.indexOf('[到店自取]') !== -1 || 
           order.message.indexOf('[预约预订]') !== -1 || 
           order.message.indexOf('[预约送餐]') !== -1
         )
-        if (isPickup && order.orderStatus === 201) {
+        if (isPickup && (order.orderStatus === 201 || order.orderStatus === 301)) {
           if (!order.handleOption) {
             order.handleOption = {}
           }
@@ -232,7 +223,7 @@ const onOrderDetail = (id) => {
 const onCancelOrder = (id) => {
   uni.showModal({
     title: '取消订单',
-    content: '您确定要取消该手作订单吗？',
+    content: '您确定要取消订单吗？',
     confirmText: '取消订单',
     cancelText: '取消',
     confirmColor: '#E07A5F',
@@ -270,7 +261,7 @@ const onConfirmReceipt = (id, message) => {
   )
   uni.showModal({
     title: isPickup ? '确认取餐' : '确认收货',
-    content: isPickup ? '您已拿到预订的手作美味了吗？确认后订单将完成。' : '您已收到心仪的手作商品了吗？确认后将打款给独立手艺人。',
+    content: isPickup ? '您已拿到预订的商品了吗？确认后订单将完成。' : '您已收到商品了吗？',
     confirmText: isPickup ? '确认取餐' : '确认收货',
     cancelText: '取消',
     confirmColor: '#8B8E4B',

@@ -59,8 +59,9 @@ const aftersaleId = ref(0)
 const detail = ref(null)
 
 onLoad((options) => {
-  if (options.id) {
+  if (options && options.id) {
     aftersaleId.value = parseInt(options.id)
+    getAftersaleDetail()
   }
 })
 

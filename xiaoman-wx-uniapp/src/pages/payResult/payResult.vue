@@ -1,6 +1,6 @@
 <template>
   <view class="container">
-    <!-- 1. 成功提交的到店自取凭证小票 -->
+    <!-- 1. 自提订单凭证小票 -->
     <view class="receipt-card glass-panel" v-if="pickupInfo">
       <view class="receipt-header">
         <text class="receipt-shop-name">小满食光</text>
@@ -11,8 +11,8 @@
       <view class="pickup-code-section">
         <text class="code-label">取餐号</text>
         <text class="code-number">{{ pickupCode }}</text>
-        <text class="code-status" :class="{ paid: isOrderPaid }">
-          {{ isOrderPaid ? '已付款 · 待取餐' : '等待门店支付' }}
+        <text class="code-status" :class="{ paid: isOrderPaid, unpaid: !isOrderPaid }">
+          {{ isOrderPaid ? '已付款 · 待取餐' : '待付款 · 待支付' }}
         </text>
       </view>
 
@@ -58,37 +58,33 @@
 
       <view class="dashed-line"></view>
 
-      <text class="receipt-footer-tip">下单成功！请凭此取餐号和电话在门店付款取餐。</text>
+      <text class="receipt-footer-tip" v-if="isOrderPaid">下单并支付成功！小满食光正在加紧备餐，请凭取餐号到店取餐。</text>
+      <text class="receipt-footer-tip unpaid-tip" v-else>订单已生成但尚未完成支付，请尽快付款以便门店为您制作。</text>
 
       <!-- 操作按钮区域 -->
       <view class="action-wrap">
-        <!-- 开发环境模拟支付按钮 -->
-        <button 
-          class="mock-pay-btn" 
-          v-if="!isOrderPaid" 
-          @tap="onMockPayment"
-        >（测试模拟）在线付款</button>
-        <button class="primary-btn" @tap="onViewOrder">查看订单详情</button>
+        <button class="primary-btn pay-now-btn" v-if="!isOrderPaid" @tap="onPayRetry">立即付款</button>
+        <button :class="isOrderPaid ? 'primary-btn' : 'secondary-btn'" @tap="onViewOrder">查看订单详情</button>
         <button class="secondary-btn" @tap="onGoShopping">返回首页</button>
       </view>
     </view>
 
     <!-- 2. 普通外卖配送订单支付结果页 (优雅降级) -->
     <view class="result-card glass-panel" v-else>
-      <view class="icon-wrap" :class="payStatus ? 'success-icon' : 'error-icon'">
-        <text class="state-icon">{{ payStatus ? '✓' : '✕' }}</text>
+      <view class="icon-wrap" :class="isOrderPaid ? 'success-icon' : 'error-icon'">
+        <text class="state-icon">{{ isOrderPaid ? '✓' : '✕' }}</text>
       </view>
 
-      <text class="result-title">{{ payStatus ? '下单成功' : '支付失败' }}</text>
+      <text class="result-title">{{ isOrderPaid ? '下单成功' : '支付未完成' }}</text>
       <text class="result-desc">
-        {{ payStatus ? '您的外卖配送订单已提交成功，我们将尽快为您送达！' : '订单已生成但支付未完成，请前往订单中心付款。' }}
+        {{ isOrderPaid ? '您的外卖配送订单已提交成功，我们将尽快为您送达！' : '订单已生成但尚未完成支付，请前往订单中心或点击下方付款。' }}
       </text>
 
       <view class="divider"></view>
 
       <view class="action-wrap">
-        <button class="primary-btn" @tap="onViewOrder" v-if="payStatus">查看订单</button>
-        <button class="primary-btn fail-btn" @tap="onPayRetry" v-else>重新支付</button>
+        <button class="primary-btn fail-btn" @tap="onPayRetry" v-if="!isOrderPaid">立即付款</button>
+        <button :class="isOrderPaid ? 'primary-btn' : 'secondary-btn'" @tap="onViewOrder">查看订单</button>
         <button class="secondary-btn" @tap="onGoShopping">继续逛逛</button>
       </view>
     </view>
@@ -96,7 +92,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import request from '../../utils/request'
 import api from '../../config/api'
@@ -111,10 +107,18 @@ const orderInfo = ref(null)
 const orderGoods = ref([])
 const pickupInfo = ref(null)
 const pickupCode = ref('')
-const isOrderPaid = ref(false)
+
+const isOrderPaid = computed(() => {
+  if (orderInfo.value && orderInfo.value.orderStatus) {
+    const s = Number(orderInfo.value.orderStatus)
+    return s !== 101 && s !== 102 && s !== 103
+  }
+  return payStatus.value
+})
 
 // 获取后台订单详情并做备注解析
 const getOrderDetail = async () => {
+  if (!orderId.value) return
   try {
     const data = await request({
       url: `${api.OrderDetail}?orderId=${orderId.value}`,
@@ -123,7 +127,7 @@ const getOrderDetail = async () => {
     if (data) {
       orderInfo.value = data.orderInfo || {}
       orderGoods.value = data.orderGoods || []
-      actualPrice.value = (data.orderInfo && data.orderInfo.actualPrice) ? data.orderInfo.actualPrice.toFixed(2) : '0.00'
+      actualPrice.value = (data.orderInfo && data.orderInfo.actualPrice) ? Number(data.orderInfo.actualPrice).toFixed(2) : '0.00'
       
       const message = data.orderInfo ? data.orderInfo.message : ''
       const parsed = parseOrderRemark(message)
@@ -132,7 +136,6 @@ const getOrderDetail = async () => {
       if (parsed) {
         pickupInfo.value = parsed
         pickupCode.value = generatePickupCode(orderId.value)
-        checkMockPayState()
       }
     }
   } catch (err) {
@@ -140,50 +143,34 @@ const getOrderDetail = async () => {
   }
 }
 
-// 检查本地模拟付款缓存状态
-const checkMockPayState = () => {
-  const isPaid = uni.getStorageSync('mock_paid_order_' + orderId.value)
-  if (isPaid === true) {
-    isOrderPaid.value = true
-  } else {
-    // 若后端自身为付款状态则同步
-    if (orderInfo.value && orderInfo.value.orderStatus !== 101) {
-      isOrderPaid.value = true
-    }
-  }
-}
-
-// 付款操作入口（接入微信支付）
-const onMockPayment = async () => {
-  const success = await payOrder(orderId.value)
-  if (success) {
-    payStatus.value = true
-    isOrderPaid.value = true
-    await getOrderDetail()
-  }
-}
-
 onLoad((options) => {
-  if (options.status) {
-    payStatus.value = options.status === 'true'
+  if (options && options.status !== undefined) {
+    payStatus.value = options.status === 'true' || options.status === '1'
   }
-  if (options.orderId) {
-    orderId.value = parseInt(options.orderId)
+  const id = options && (options.orderId || options.id)
+  if (id) {
+    orderId.value = parseInt(id)
     getOrderDetail()
   }
 })
 
 const onViewOrder = () => {
+  if (!orderId.value) {
+    uni.navigateTo({
+      url: '/pages/ucenter/order/order'
+    })
+    return
+  }
   uni.navigateTo({
     url: `/pages/ucenter/orderDetail/orderDetail?id=${orderId.value}`
   })
 }
 
 const onPayRetry = async () => {
+  if (!orderId.value) return
   const success = await payOrder(orderId.value)
   if (success) {
     payStatus.value = true
-    isOrderPaid.value = true
     await getOrderDetail()
   }
 }
@@ -273,6 +260,21 @@ const onGoShopping = () => {
 .code-status.paid {
   color: #FFFFFF;
   background-color: #6F4E37;
+}
+
+.code-status.unpaid {
+  color: #FFFFFF;
+  background-color: #E07A5F;
+}
+
+.receipt-footer-tip.unpaid-tip {
+  color: #E07A5F;
+  font-weight: bold;
+}
+
+.pay-now-btn {
+  background-color: #E07A5F;
+  box-shadow: 0 6rpx 16rpx rgba(224, 122, 95, 0.25);
 }
 
 .dashed-line {
