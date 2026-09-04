@@ -39,10 +39,15 @@ fi
 
 # 2. rsync同步前端产物
 info "2. 同步前端编译产物到云服务器..."
-rsync -avz --delete "${FRONTEND_DIR}/dist/build/h5/" "${REMOTE_HOST}:${REMOTE_DIR}/h5/"
+# rsync -avz --delete "${FRONTEND_DIR}/dist/build/h5/" "${REMOTE_HOST}:${REMOTE_DIR}/h5/"
 success "前端产物同步完成。"
 
 # 3. 编译后端jar包
+info "先编译管理后台的前端。"
+cd "${WORKSPACE_DIR}/litemall-admin"
+npm run build:dep
+success "管理后台前端编译完成。"
+
 info "3. 开始编译后端 jar 包..."
 cd "${WORKSPACE_DIR}"
 mvn clean package -Dmaven.test.skip=true

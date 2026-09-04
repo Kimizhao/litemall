@@ -55,3 +55,7 @@ gen_code
 
 相关资料/
 large_coffee_test.jpg
+.vscode/
+.env*
+*.xls
+*.xlsx

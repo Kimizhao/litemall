@@ -5,9 +5,13 @@ This file defines the project architecture, naming conventions, build commands, 
 ---
 
 ## 1. Project Overview & Directories
-* **Frontend**: `xiaoman-wx-uniapp/` (Uni-app Vue3 + Vite project)
-* **Backend**: `litemall-db/`, `litemall-core/`, `litemall-wx-api/`, etc. (Spring Boot / Maven project)
-* **Design Specification**: [docs/superpowers/specs/2026-06-17-xiaoman-ordering-design.md](file:///Users/zhaozh/Desktop/litemall/docs/superpowers/specs/2026-06-17-xiaoman-ordering-design.md)
+* **Ordering Frontend**: `xiaoman-wx-uniapp/` (Uni-app Vue3 + Vite project)
+* **Admin Frontend**: `litemall-admin/` (Vue2 + Element-UI, Dev Port: `9527`)
+* **Backend**: `litemall-all/`, `litemall-db/`, `litemall-core/`, `litemall-wx-api/`, `litemall-admin-api/` (Spring Boot / Maven, Dev Port: `8082`, Prod Port: `8080`)
+* **Documentation Pointers**:
+  * Architecture & State Machine: [docs/ARCHITECTURE.md](file:///Users/zhaozh/Desktop/litemall/docs/ARCHITECTURE.md)
+  * Operations & Runbook: [docs/RUNBOOK.md](file:///Users/zhaozh/Desktop/litemall/docs/RUNBOOK.md)
+  * System Design Spec: [docs/superpowers/specs/2026-06-17-xiaoman-ordering-design.md](file:///Users/zhaozh/Desktop/litemall/docs/superpowers/specs/2026-06-17-xiaoman-ordering-design.md)
 
 ---
 
@@ -47,22 +51,35 @@ This file defines the project architecture, naming conventions, build commands, 
 ### 3.5 Product Detail Viewing
 * **Catalog/Ordering Page (`catalog.vue`)**: Tapping anywhere on a product card container `.goods-item` (excluding the quantity minus/plus selector buttons which have stop propagation) redirects to the detailed view page `/pages/goods/goods?id=${item.id}`.
 
+### 3.6 Cloud Printer & WeChat Shipping Integration
+* **Cloud Thermal Printer (`LitemallPrinterClient`)**: Automatically triggers print receipt jobs on paid status `201`. Safe bypass if credentials are not configured.
+* **WeChat Order Shipping API (`WxShippingService`)**: Synchronizes virtual/express/pickup shipping info to the official WeChat Mini-Program Order Management API.
+
 ---
 
 ## 4. Key Commands & Operations
 
-### 4.1 Frontend Commands (`xiaoman-wx-uniapp/`)
-* **H5 Dev Server**: `npm run dev:h5`
-* **H5 Compilation**: `npm run build:h5`
-* **WeChat MP Dev**: `npm run dev:mp-weixin`
-* **WeChat MP Compilation**: `npm run build:mp-weixin`
+### 4.1 Local Development (`start.sh` at root)
+* **One-Click Local Dev**: `./start.sh` (cleans occupied ports, starts backend on `8082` and admin dashboard on `9527`).
 
-### 4.2 Backend Commands
+### 4.2 Frontend Commands
+* **Xiaoman Mini-Program (`xiaoman-wx-uniapp/`)**:
+  * H5: `npm run dev:h5` / `npm run build:h5`
+  * WeChat MP: `npm run dev:mp-weixin` / `npm run build:mp-weixin`
+* **Admin Portal (`litemall-admin/`)**:
+  * Dev Server: `npm run dev` (Port 9527, proxies to `8082`)
+  * Build into Backend Jar: `npm run build:dep`
+
+### 4.3 Backend Commands
 * **Clean & Package Jar**: `mvn clean package -Dmaven.test.skip=true`
 
-### 4.3 Deployment (`deploy.sh` at root)
-* **Helper Script**: `./deploy.sh` compiles the H5 static assets, syncs them to the remote server, packages the Java jar, uploads it, and restarts the remote Docker container.
+### 4.4 Deployment (`deploy.sh` at root)
+* **Helper Script**: `./deploy.sh` builds admin frontend, packages the Java jar, syncs to remote server, and restarts Docker container.
 * **CRITICAL**: Do **NOT** run `./deploy.sh` or sync changes to the remote server if the user specifies "先不部署" (do not deploy yet). Always compile and test changes locally first.
 
-### 4.4 Image Compression Helper (`compress_images.py` at root)
+### 4.5 Image Compression Helper (`compress_images.py` at root)
 * **Helper Script**: `./compress_images.py` provides batch image resizing (max dimension 800px) and quality compression (default 85%) for local and server storage images (JPEG/PNG). Overwriting original files in-place requires `--inplace` flag.
+
+### 4.6 Online Database Backup (`backup.sh` at root)
+* **Helper Script**: `./backup.sh` connects to remote Docker MySQL, dumps the `litemall` database, and automatically synchronizes the `.sql` snapshot to the local `backup/` directory. Supports optional custom filename argument (default: `YYYY-MM-DD.sql`).
+

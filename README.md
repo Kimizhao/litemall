@@ -1,10 +1,19 @@
-# litemall
+# litemall / 小满食光点餐系统
 
-又一个小商场系统。
+本项目已深度定制为 **“小满食光”** 暖日系手作餐饮点餐小程序与后台管理系统（支持到店自取、外卖配送、预约点餐、微信支付、飞鹅云打印自动出单与微信小程序发货管理对接）。
 
-litemall = Spring Boot后端 + Vue管理员前端 + 微信小程序用户前端 + Vue用户移动端
+* **系统架构与状态机**：[docs/ARCHITECTURE.md](file:///Users/zhaozh/Desktop/litemall/docs/ARCHITECTURE.md)
+* **运维与启动手册**：[docs/RUNBOOK.md](file:///Users/zhaozh/Desktop/litemall/docs/RUNBOOK.md)
+* **业务设计规范**：[docs/superpowers/specs/2026-06-17-xiaoman-ordering-design.md](file:///Users/zhaozh/Desktop/litemall/docs/superpowers/specs/2026-06-17-xiaoman-ordering-design.md)
+* **一键本地开发启动**：`./start.sh`（后端端口 `8082`，管理前端 `http://localhost:9527`）
+* **微信小程序源码**：`xiaoman-wx-uniapp/`（Uni-app Vue3 + Vite）
 
-* [文档](https://linlinjava.gitbook.io/litemall)
+---
+
+### 原生 Litemall 开源参考
+litemall 原生包含 Spring Boot后端 + Vue管理员前端 + 微信小程序用户前端 + Vue用户移动端
+
+* [官方文档](https://linlinjava.gitbook.io/litemall)
 * [贡献](https://linlinjava.gitbook.io/litemall/contribute)
 * [FAQ](https://linlinjava.gitbook.io/litemall/faq)
 * [API](https://linlinjava.gitbook.io/litemall/api)
