@@ -114,17 +114,21 @@ import { onShow, onShareAppMessage, onShareTimeline } from '@dcloudio/uni-app'
 import request from '../../utils/request'
 import api, { WxApiHost } from '../../config/api'
 
+const shareCover = '/static/xiaoman/share_cover.jpg'
+
 onShareAppMessage((res) => {
   return {
     title: '小满食光 - 三明治·紫米饭团·饮品',
-    path: '/pages/index/index'
+    path: '/pages/index/index',
+    imageUrl: shareCover
   }
 })
 
 onShareTimeline(() => {
   return {
     title: '小满食光 - 三明治·紫米饭团·饮品',
-    query: ''
+    query: '',
+    imageUrl: shareCover
   }
 })
 
