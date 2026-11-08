@@ -82,7 +82,7 @@
           class="goods-list" 
           :key="activeCategoryId + '_' + (activeSubCategoryId || 'all')"
           :enhanced="true"
-          :show-scrollbar="false"
+          :show-scrollbar="true"
         >
           <view 
             class="goods-item" 
@@ -551,8 +551,23 @@ const onGoodsTap = (item) => {
   height: 0;
   min-height: 0;
   background-color: #FAF6EE;
-  padding: 8rpx 24rpx 60rpx 24rpx;
+  padding: 8rpx 24rpx 0rpx 24rpx;
   box-sizing: border-box;
+}
+
+/* 保证右侧滚动条可见且符合小满暖咖风格 */
+.goods-list::-webkit-scrollbar {
+  width: 6rpx;
+  display: block;
+}
+
+.goods-list::-webkit-scrollbar-thumb {
+  background-color: rgba(111, 78, 55, 0.3);
+  border-radius: 6rpx;
+}
+
+.goods-list::-webkit-scrollbar-track {
+  background-color: transparent;
 }
 
 .goods-item {
