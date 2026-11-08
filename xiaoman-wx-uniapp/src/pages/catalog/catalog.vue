@@ -77,7 +77,13 @@
         </view>
 
         <!-- 商品列表 -->
-        <scroll-view scroll-y class="goods-list" :scroll-top="goodsScrollTop">
+        <scroll-view 
+          scroll-y 
+          class="goods-list" 
+          :key="activeCategoryId + '_' + (activeSubCategoryId || 'all')"
+          :enhanced="true"
+          :show-scrollbar="false"
+        >
           <view 
             class="goods-item" 
             :class="{ 'sold-out': item.isSoldOut }"
@@ -139,7 +145,6 @@ const LOW_STOCK_THRESHOLD = 3
 
 const activeCategoryId = ref(null) // 默认选中分类 ID，动态设定
 const activeSubCategoryId = ref(null) // 选中的二级分类 ID (null 代表“全部”)
-const goodsScrollTop = ref(0) // 控制商品列表滚动复位
 
 const categories = ref([])
 
@@ -256,21 +261,15 @@ onPullDownRefresh(async () => {
   uni.stopPullDownRefresh()
 })
 
-const resetScrollTop = () => {
-  goodsScrollTop.value = goodsScrollTop.value === 0 ? 0.01 : 0
-}
-
 const onCategorySelect = (id) => {
   if (activeCategoryId.value === id) return
   activeCategoryId.value = id
   activeSubCategoryId.value = null // 切换一级分类自动重置二级为“全部”
-  resetScrollTop()
 }
 
 const onSubCategorySelect = (subId) => {
   if (activeSubCategoryId.value === subId) return
   activeSubCategoryId.value = subId
-  resetScrollTop()
 }
 
 // 跳转商品详情页（若已售罄则拦截并轻提示）
@@ -294,6 +293,7 @@ const onGoodsTap = (item) => {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  overflow: hidden;
   background-color: #FAF6EE;
   color: #4A3525;
 }
@@ -302,6 +302,7 @@ const onGoodsTap = (item) => {
 .shop-header {
   position: relative;
   height: 260rpx;
+  flex-shrink: 0;
   display: flex;
   align-items: flex-end;
   padding: 40rpx;
@@ -405,15 +406,18 @@ const onGoodsTap = (item) => {
 .menu-container {
   display: flex;
   flex: 1;
+  height: 0;
+  min-height: 0;
   overflow: hidden;
 }
 
 /* 3.1 左栏品类 */
 .sidebar {
   width: 170rpx;
+  height: 100%;
   background-color: #F5EEDF;
   border-right: 1rpx solid #E6D5B8;
-  height: 100%;
+  flex-shrink: 0;
 }
 
 .category-tab {
@@ -465,11 +469,13 @@ const onGoodsTap = (item) => {
 /* 3.2 右栏：内容展示区 */
 .right-content {
   flex: 1;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background-color: #FAF6EE;
   overflow: hidden;
-  height: 100%;
 }
 
 .right-header {
@@ -542,8 +548,10 @@ const onGoodsTap = (item) => {
 /* 3.3 右栏单品列表 */
 .goods-list {
   flex: 1;
+  height: 0;
+  min-height: 0;
   background-color: #FAF6EE;
-  padding: 8rpx 24rpx 24rpx 24rpx;
+  padding: 8rpx 24rpx 60rpx 24rpx;
   box-sizing: border-box;
 }
 
