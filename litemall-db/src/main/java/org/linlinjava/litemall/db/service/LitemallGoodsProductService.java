@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -21,6 +22,15 @@ public class LitemallGoodsProductService {
     public List<LitemallGoodsProduct> queryByGid(Integer gid) {
         LitemallGoodsProductExample example = new LitemallGoodsProductExample();
         example.or().andGoodsIdEqualTo(gid).andDeletedEqualTo(false);
+        return litemallGoodsProductMapper.selectByExample(example);
+    }
+
+    public List<LitemallGoodsProduct> queryByGids(List<Integer> gids) {
+        if (gids == null || gids.isEmpty()) {
+            return new ArrayList<>();
+        }
+        LitemallGoodsProductExample example = new LitemallGoodsProductExample();
+        example.or().andGoodsIdIn(gids).andDeletedEqualTo(false);
         return litemallGoodsProductMapper.selectByExample(example);
     }
 

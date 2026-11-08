@@ -59,3 +59,4 @@ large_coffee_test.jpg
 .env*
 *.xls
 *.xlsx
+backup/

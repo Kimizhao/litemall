@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 /**
  * 商品服务
@@ -178,12 +179,26 @@ public class WxGoodsController {
 		Map<String, Object> data = new HashMap<>();
 
 		try {
+			List<LitemallGoodsProduct> productList = (List<LitemallGoodsProduct>) productListCallableTask.get();
+			int totalStock = 0;
+			if (productList != null) {
+				for (LitemallGoodsProduct p : productList) {
+					if (p.getNumber() != null) {
+						totalStock += p.getNumber();
+					}
+				}
+			}
+			if (info != null) {
+				info.setTotalStock(totalStock);
+				info.setIsSoldOut(totalStock <= 0);
+			}
+
 			data.put("info", info);
 			data.put("userHasCollect", userHasCollect);
 			data.put("issue", issueCallableTask.get());
 			data.put("comment", commentsCallableTsk.get());
 			data.put("specificationList", objectCallableTask.get());
-			data.put("productList", productListCallableTask.get());
+			data.put("productList", productList);
 			data.put("attribute", goodsAttributeListTask.get());
 			data.put("brand", brandCallableTask.get());
 			data.put("groupon", grouponRulesCallableTask.get());
@@ -269,6 +284,20 @@ public class WxGoodsController {
 
 		//查询列表数据
 		List<LitemallGoods> goodsList = goodsService.querySelective(categoryId, brandId, keyword, isHot, isNew, page, limit, sort, order);
+
+		// 批量聚合计算各商品的有效规格总库存与售罄状态
+		if (goodsList != null && !goodsList.isEmpty()) {
+			List<Integer> goodsIds = goodsList.stream().map(LitemallGoods::getId).collect(Collectors.toList());
+			List<LitemallGoodsProduct> products = productService.queryByGids(goodsIds);
+			Map<Integer, Integer> stockMap = products.stream()
+				.collect(Collectors.groupingBy(LitemallGoodsProduct::getGoodsId,
+					Collectors.summingInt(p -> p.getNumber() == null ? 0 : p.getNumber())));
+			for (LitemallGoods goods : goodsList) {
+				Integer stock = stockMap.getOrDefault(goods.getId(), 0);
+				goods.setTotalStock(stock);
+				goods.setIsSoldOut(stock <= 0);
+			}
+		}
 
 		// 查询商品所属类目列表。
 		List<Integer> goodsCatIds = goodsService.getCatIds(brandId, keyword, isHot, isNew);

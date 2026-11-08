@@ -38,35 +38,86 @@
         </view>
       </scroll-view>
 
-      <!-- 3.2 右栏：商品列表 -->
-      <scroll-view scroll-y class="goods-list">
-        <view class="section-title">
-          <text class="section-indicator"></text>
-          <text>{{ currentCategoryName }}</text>
+      <!-- 3.2 右栏：内容展示区 -->
+      <view class="right-content">
+        <!-- 头部标题与二级类目胶囊栏 (常驻吸顶) -->
+        <view class="right-header">
+          <view class="section-title">
+            <text class="section-indicator"></text>
+            <text>{{ currentCategoryName }}</text>
+          </view>
+
+          <!-- 二级类目横向胶囊栏 (仅在有效二级类目 >= 2 时智能展示) -->
+          <scroll-view 
+            scroll-x 
+            class="subcategory-scroll" 
+            v-if="validSubCategories.length >= 2"
+            :show-scrollbar="false"
+            enhanced
+          >
+            <view class="subcategory-bar">
+              <view 
+                class="subcat-pill" 
+                :class="{ active: activeSubCategoryId === null }"
+                @tap="onSubCategorySelect(null)"
+              >
+                <text class="subcat-pill-text">全部</text>
+              </view>
+              <view 
+                v-for="sub in validSubCategories" 
+                :key="sub.id"
+                class="subcat-pill"
+                :class="{ active: activeSubCategoryId === sub.id }"
+                @tap="onSubCategorySelect(sub.id)"
+              >
+                <text class="subcat-pill-text">{{ sub.name }}</text>
+              </view>
+            </view>
+          </scroll-view>
         </view>
 
-        <view class="goods-item" v-for="item in filteredGoods" :key="item.id" @tap="onGoodsTap(item.id)">
-          <view class="goods-img-wrapper">
-            <image :src="item.picUrl" mode="aspectFill" class="goods-img" />
-          </view>
-          <view class="goods-info">
-            <view class="goods-name-row">
-              <text class="goods-name">{{ item.name }}</text>
-              <text class="goods-desc">{{ item.brief }}</text>
+        <!-- 商品列表 -->
+        <scroll-view scroll-y class="goods-list" :scroll-top="goodsScrollTop">
+          <view 
+            class="goods-item" 
+            :class="{ 'sold-out': item.isSoldOut }"
+            v-for="item in filteredGoods" 
+            :key="item.id" 
+            @tap="onGoodsTap(item)"
+          >
+            <view class="goods-img-wrapper">
+              <image :src="item.picUrl" mode="aspectFill" class="goods-img" />
             </view>
-            <view class="goods-action-row">
-              <view class="price-container">
-                <text class="price-discount">{{ item.retailPrice }}</text>
-                <text class="price-original" v-if="item.counterPrice && item.counterPrice > item.retailPrice">{{ item.counterPrice }}</text>
+            <view class="goods-info">
+              <view class="goods-name-row">
+                <text class="goods-name">{{ item.name }}</text>
+                <text class="goods-desc">{{ item.brief }}</text>
+              </view>
+
+              <!-- 低库存微标 (仅在未售罄且 1 <= totalStock <= 3 时展示) -->
+              <view class="stock-badge" v-if="!item.isSoldOut && item.totalStock && item.totalStock <= LOW_STOCK_THRESHOLD">
+                <text class="stock-badge-text">仅剩{{ item.totalStock }}份</text>
+              </view>
+
+              <view class="goods-action-row">
+                <view class="price-container">
+                  <text class="price-discount">{{ item.retailPrice }}</text>
+                  <text class="price-original" v-if="item.counterPrice && item.counterPrice > item.retailPrice">{{ item.counterPrice }}</text>
+                </view>
+
+                <!-- 已售罄标识 (参考截图居右展示) -->
+                <view class="sold-out-tag" v-if="item.isSoldOut">
+                  <text class="sold-out-text">已售罄</text>
+                </view>
               </view>
             </view>
           </view>
-        </view>
 
-        <view class="empty-state" v-if="filteredGoods.length === 0">
-          <text class="empty-text">正在制作美味中...</text>
-        </view>
-      </scroll-view>
+          <view class="empty-state" v-if="filteredGoods.length === 0">
+            <text class="empty-text">正在制作美味中...</text>
+          </view>
+        </scroll-view>
+      </view>
     </view>
   </view>
 </template>
@@ -83,7 +134,12 @@ const shopHeaderBg = `/static/xiaoman/shop_header.jpg`
 const hasLogin = ref(false)
 const goodsList = ref([])
 
+// 低库存紧张预警阈值 (<= 3 份触发微标展示)
+const LOW_STOCK_THRESHOLD = 3
+
 const activeCategoryId = ref(null) // 默认选中分类 ID，动态设定
+const activeSubCategoryId = ref(null) // 选中的二级分类 ID (null 代表“全部”)
+const goodsScrollTop = ref(0) // 控制商品列表滚动复位
 
 const categories = ref([])
 
@@ -92,13 +148,37 @@ const currentCategoryName = computed(() => {
   return cat ? cat.name : ''
 })
 
-// 根据当前一级分类下的所有二级分类动态过滤商品
+// 计算当前一级分类下具有在售商品的有效二级分类列表 (过滤掉在售商品数为 0 的二级类目)
+const validSubCategories = computed(() => {
+  const activeCat = categories.value.find(item => item.id === activeCategoryId.value)
+  if (!activeCat || !activeCat.l2SubCategories) return []
+
+  return activeCat.l2SubCategories.filter(sub => {
+    return goodsList.value.some(item => item.categoryId === sub.id)
+  })
+})
+
+// 根据当前一级分类与选中的二级分类过滤商品，并执行“售罄商品自动沉底”
 const filteredGoods = computed(() => {
   const activeCat = categories.value.find(item => item.id === activeCategoryId.value)
   if (!activeCat || !activeCat.l2SubCategories) return []
-  
-  const subIds = activeCat.l2SubCategories.map(sub => sub.id)
-  return goodsList.value.filter(item => subIds.includes(item.categoryId))
+
+  let list = []
+  // 若选定了具体二级分类，则精确过滤
+  if (activeSubCategoryId.value !== null) {
+    list = goodsList.value.filter(item => item.categoryId === activeSubCategoryId.value)
+  } else {
+    // 默认“全部”模式：展示该一级分类下所有二级子分类对应的商品
+    const subIds = activeCat.l2SubCategories.map(sub => sub.id)
+    list = goodsList.value.filter(item => subIds.includes(item.categoryId))
+  }
+
+  // 排序：有货商品在前，已售罄商品自动沉底至当前类目末尾
+  return [...list].sort((a, b) => {
+    const aSold = a.isSoldOut ? 1 : 0
+    const bSold = b.isSoldOut ? 1 : 0
+    return aSold - bSold
+  })
 })
 
 // 动态从后台加载分类与对应的商品列表
@@ -176,14 +256,35 @@ onPullDownRefresh(async () => {
   uni.stopPullDownRefresh()
 })
 
-const onCategorySelect = (id) => {
-  activeCategoryId.value = id
+const resetScrollTop = () => {
+  goodsScrollTop.value = goodsScrollTop.value === 0 ? 0.01 : 0
 }
 
-// 跳转商品详情页
-const onGoodsTap = (id) => {
+const onCategorySelect = (id) => {
+  if (activeCategoryId.value === id) return
+  activeCategoryId.value = id
+  activeSubCategoryId.value = null // 切换一级分类自动重置二级为“全部”
+  resetScrollTop()
+}
+
+const onSubCategorySelect = (subId) => {
+  if (activeSubCategoryId.value === subId) return
+  activeSubCategoryId.value = subId
+  resetScrollTop()
+}
+
+// 跳转商品详情页（若已售罄则拦截并轻提示）
+const onGoodsTap = (item) => {
+  if (item.isSoldOut) {
+    uni.showToast({
+      title: '该餐品今日已售罄',
+      icon: 'none',
+      duration: 1500
+    })
+    return
+  }
   uni.navigateTo({
-    url: `/pages/goods/goods?id=${id}`
+    url: `/pages/goods/goods?id=${item.id}`
   })
 }
 </script>
@@ -312,6 +413,7 @@ const onGoodsTap = (id) => {
   width: 170rpx;
   background-color: #F5EEDF;
   border-right: 1rpx solid #E6D5B8;
+  height: 100%;
 }
 
 .category-tab {
@@ -360,18 +462,27 @@ const onGoodsTap = (id) => {
   border-radius: 0 4rpx 4rpx 0;
 }
 
-/* 3.2 右栏单品列表 */
-.goods-list {
+/* 3.2 右栏：内容展示区 */
+.right-content {
   flex: 1;
+  display: flex;
+  flex-direction: column;
   background-color: #FAF6EE;
-  padding: 24rpx;
+  overflow: hidden;
+  height: 100%;
+}
+
+.right-header {
+  padding: 24rpx 24rpx 16rpx 24rpx;
+  background-color: #FAF6EE;
+  flex-shrink: 0;
+  z-index: 10;
 }
 
 .section-title {
   font-size: 28rpx;
   font-weight: 800;
   color: #6F4E37;
-  margin-bottom: 24rpx;
   display: flex;
   align-items: center;
   gap: 10rpx;
@@ -382,6 +493,58 @@ const onGoodsTap = (id) => {
   height: 28rpx;
   background-color: #6F4E37;
   border-radius: 3rpx;
+}
+
+/* 二级类目横向滑动胶囊栏 */
+.subcategory-scroll {
+  width: 100%;
+  white-space: nowrap;
+  margin-top: 16rpx;
+}
+
+.subcategory-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 14rpx;
+  padding-right: 24rpx;
+}
+
+.subcat-pill {
+  padding: 8rpx 24rpx;
+  border-radius: 999rpx;
+  background-color: #F5EFE6;
+  border: 1rpx solid rgba(230, 213, 184, 0.6);
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.subcat-pill.active {
+  background-color: #6F4E37;
+  border-color: #6F4E37;
+  box-shadow: 0 4rpx 10rpx rgba(111, 78, 55, 0.18);
+}
+
+.subcat-pill-text {
+  font-size: 24rpx;
+  color: #A18276;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.subcat-pill.active .subcat-pill-text {
+  color: #FFFFFF;
+  font-weight: 700;
+}
+
+/* 3.3 右栏单品列表 */
+.goods-list {
+  flex: 1;
+  background-color: #FAF6EE;
+  padding: 8rpx 24rpx 24rpx 24rpx;
+  box-sizing: border-box;
 }
 
 .goods-item {
@@ -400,6 +563,17 @@ const onGoodsTap = (id) => {
   opacity: 0.9;
   background-color: #FAF6EE;
   transform: scale(0.99);
+}
+
+/* 售罄卡片弱化与交互样式 */
+.goods-item.sold-out {
+  opacity: 0.6;
+}
+
+.goods-item.sold-out:active {
+  transform: none;
+  background-color: #FFFFFF;
+  opacity: 0.6;
 }
 
 .goods-img-wrapper {
@@ -442,6 +616,24 @@ const onGoodsTap = (id) => {
   line-height: 1.3;
 }
 
+/* 低库存紧张提醒微标 */
+.stock-badge {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  margin-top: 8rpx;
+  background-color: rgba(224, 122, 95, 0.1);
+  padding: 2rpx 12rpx;
+  border-radius: 6rpx;
+}
+
+.stock-badge-text {
+  font-size: 20rpx;
+  color: #E07A5F;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
 .goods-action-row {
   display: flex;
   justify-content: space-between;
@@ -475,6 +667,19 @@ const onGoodsTap = (id) => {
 
 .price-original::before {
   content: '¥';
+}
+
+/* 已售罄标识 */
+.sold-out-tag {
+  display: flex;
+  align-items: center;
+}
+
+.sold-out-text {
+  font-size: 24rpx;
+  color: #A18276;
+  font-weight: 600;
+  letter-spacing: 1rpx;
 }
 
 /* Empty state */

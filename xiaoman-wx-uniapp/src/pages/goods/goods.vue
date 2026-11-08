@@ -188,7 +188,7 @@
       </view>
       <view class="r" @tap="onAddToCart" v-if="!soldout">加入购物车</view>
       <view class="c" @tap="onBuyNow" v-if="!soldout">立即购买</view>
-      <view class="n" v-if="soldout">商品已售空</view>
+      <view class="n" v-if="soldout">已售罄</view>
     </view>
   </view>
 
@@ -297,6 +297,14 @@ const getGoodsDetail = async () => {
         }
       })
       
+      // 同步全规格库存与售罄状态
+      if (data.info && data.info.isSoldOut !== undefined) {
+        soldout.value = data.info.isSoldOut
+      } else if (productList.value.length > 0) {
+        const totalStock = productList.value.reduce((acc, p) => acc + (p.number || 0), 0)
+        soldout.value = totalStock <= 0
+      }
+
       // If only one SKU exists, auto-select it
       if (specificationList.value.length === 1) {
         if (specificationList.value[0].valueList.length === 1) {
