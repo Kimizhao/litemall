@@ -33,6 +33,18 @@
 
     <!-- Content Area -->
     <view class="content-body">
+      <!-- Shop Manager Console Card (Only for bound administrators) -->
+      <view class="admin-workbench-card" v-if="hasAdminBound" @tap="onGoWorkbench">
+        <view class="admin-card-left">
+          <view class="admin-badge-icon">🌿</view>
+          <text class="admin-card-title">工作台</text>
+        </view>
+        <view class="admin-card-right">
+          <text class="admin-pending-badge" v-if="adminPendingTotal > 0">{{ adminPendingTotal }} 待办</text>
+          <text class="admin-enter-arrow">›</text>
+        </view>
+      </view>
+
       <!-- Order Management Container -->
       <view class="menu-box glass-panel">
         <view class="box-header">
@@ -80,6 +92,11 @@
           </view>
         </view>
       </view>
+
+      <!-- Low-key Merchant Entry at bottom -->
+      <view class="merchant-footer-entry" @tap="onMerchantEntryTap">
+        <text class="merchant-entry-text">工作台入口</text>
+      </view>
     </view>
   </view>
 </template>
@@ -93,6 +110,8 @@ import api from '../../config/api'
 // Reactive state variables
 const hasLogin = ref(false)
 const userInfo = ref(null)
+const hasAdminBound = ref(false)
+const adminPendingTotal = ref(0)
 
 const order = ref({
   unpaid: 0,
@@ -160,9 +179,14 @@ onShow(async () => {
     } catch (err) {
       console.error('Failed to sync order counts onShow:', err)
     }
+
+    // 检查店铺管理员授权状态
+    await checkAdminStatus()
   } else {
     hasLogin.value = false
     userInfo.value = null
+    hasAdminBound.value = false
+    adminPendingTotal.value = 0
     order.value = {
       unpaid: 0,
       unship: 0,
@@ -171,6 +195,52 @@ onShow(async () => {
     }
   }
 })
+
+const checkAdminStatus = async () => {
+  if (!hasLogin.value) {
+    hasAdminBound.value = false
+    adminPendingTotal.value = 0
+    return
+  }
+  try {
+    const res = await request({ url: api.AdminAuthStatus, hideErrorToast: true })
+    if (res && res.isBound) {
+      hasAdminBound.value = true
+      try {
+        const orderRes = await request({ url: api.AdminOrderList, data: { limit: 1 }, hideErrorToast: true })
+        if (orderRes) {
+          adminPendingTotal.value = (orderRes.pendingMakingCount || 0) + (orderRes.pendingPickupCount || 0) + (orderRes.pendingRefundCount || 0)
+        }
+      } catch (err) {
+        console.error('获取商家待办数失败:', err)
+      }
+    } else {
+      hasAdminBound.value = false
+      adminPendingTotal.value = 0
+    }
+  } catch (e) {
+    hasAdminBound.value = false
+    adminPendingTotal.value = 0
+  }
+}
+
+const onGoWorkbench = () => {
+  uni.navigateTo({
+    url: '/pages/admin/workbench'
+  })
+}
+
+const onMerchantEntryTap = () => {
+  if (hasAdminBound.value) {
+    uni.navigateTo({
+      url: '/pages/admin/workbench'
+    })
+  } else {
+    uni.navigateTo({
+      url: '/pages/admin/login'
+    })
+  }
+}
 
 const onProfileTap = () => {
   if (hasLogin.value) {
@@ -639,5 +709,76 @@ const onServiceTap = (item) => {
   line-height: 1;
   position: relative;
   top: -2rpx;
+}
+
+/* 店长工作台入口卡片 */
+.admin-workbench-card {
+  margin-bottom: 24rpx;
+  padding: 24rpx 28rpx;
+  background: linear-gradient(135deg, #FAF4EB 0%, #F5ECE0 100%);
+  border-radius: 20rpx;
+  border: 2rpx solid #E6D7C3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4rpx 16rpx rgba(111, 78, 55, 0.08);
+}
+
+.admin-card-left {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.admin-badge-icon {
+  width: 72rpx;
+  height: 72rpx;
+  background: #6F4E37;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 38rpx;
+  color: #FAF6EE;
+}
+
+.admin-card-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #4A3525;
+}
+
+.admin-card-right {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.admin-pending-badge {
+  padding: 6rpx 18rpx;
+  background: #E07A5F;
+  color: #ffffff;
+  font-size: 24rpx;
+  font-weight: 700;
+  border-radius: 24rpx;
+}
+
+.admin-enter-arrow {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #A18276;
+}
+
+/* 底部极隐蔽工作台入口 */
+.merchant-footer-entry {
+  text-align: center;
+  padding: 40rpx 0 30rpx;
+}
+
+.merchant-entry-text {
+  font-size: 20rpx;
+  color: #E2DBD0;
+  text-decoration: none;
+  letter-spacing: 1rpx;
 }
 </style>

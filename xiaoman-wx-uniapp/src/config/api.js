@@ -110,5 +110,28 @@ export default {
 
   StorageUpload: WxApiRoot + 'storage/upload',      // 图片上传
   UserIndex: WxApiRoot + 'user/index',              // 个人页面用户相关信息
-  IssueList: WxApiRoot + 'issue/list'               // 帮助信息
+  IssueList: WxApiRoot + 'issue/list',              // 帮助信息
+
+  // 商家工作台接口
+  AdminAuthStatus: WxApiRoot + 'admin/auth/status',     // 商家绑定状态查询
+  AdminAuthLogin: WxApiRoot + 'admin/auth/login',       // 商家账号密码绑定
+  AdminAuthLogout: WxApiRoot + 'admin/auth/logout',     // 商家解绑退出
+  AdminOrderList: WxApiRoot + 'admin/order/list',       // 商家订单列表
+  AdminOrderDetail: WxApiRoot + 'admin/order/detail',   // 商家订单详情
+  AdminOrderReady: WxApiRoot + 'admin/order/ready',     // 出餐/制作完成通知
+  AdminOrderBatchReady: WxApiRoot + 'admin/order/batchReady', // 批量出餐
+  AdminOrderVerify: WxApiRoot + 'admin/order/verify',   // 扫码/手输提货码核销
+  AdminOrderBatchVerify: WxApiRoot + 'admin/order/batchVerify', // 批量核销
+  AdminOrderReprint: WxApiRoot + 'admin/order/reprint', // 补打小票
+  AdminOrderRefund: WxApiRoot + 'admin/order/refund',   // 审核退款
+  AdminGoodsList: WxApiRoot + 'admin/goods/list',       // 商家商品列表
+  AdminGoodsDetail: WxApiRoot + 'admin/goods/detail',   // 商家商品详情(含SKU)
+  AdminGoodsQuickUpdate: WxApiRoot + 'admin/goods/quick-update', // 快速改价改库与沽清
+  AdminGoodsSave: WxApiRoot + 'admin/goods/save',       // 保存/新增商品
+  AdminGoodsDelete: WxApiRoot + 'admin/goods/delete',   // 删除商品
+  AdminCategoryList: WxApiRoot + 'admin/category/list', // 类目树列表
+  AdminCategorySave: WxApiRoot + 'admin/category/save', // 保存/新增类目
+  AdminCategoryDelete: WxApiRoot + 'admin/category/delete', // 删除类目
+  AdminDashboard: WxApiRoot + 'admin/dashboard/index',  // 仪表盘营收数据与打印机状态
+  AdminPrintTest: WxApiRoot + 'admin/dashboard/print-test' // 云打印机测试打印
 }

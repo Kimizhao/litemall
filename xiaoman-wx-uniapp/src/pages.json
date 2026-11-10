@@ -301,6 +301,23 @@
         "navigationBarBackgroundColor": "#ffffff",
         "navigationBarTextStyle": "black"
       }
+    },
+    {
+      "path": "pages/admin/login",
+      "style": {
+        "navigationBarTitleText": "工作台",
+        "navigationBarBackgroundColor": "#FAF6EE",
+        "navigationBarTextStyle": "black"
+      }
+    },
+    {
+      "path": "pages/admin/workbench",
+      "style": {
+        "navigationBarTitleText": "工作台",
+        "navigationBarBackgroundColor": "#6F4E37",
+        "navigationBarTextStyle": "white",
+        "enablePullDownRefresh": true
+      }
     }
   ],
   "globalStyle": {

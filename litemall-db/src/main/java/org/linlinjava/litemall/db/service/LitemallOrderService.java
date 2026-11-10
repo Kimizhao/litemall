@@ -141,6 +141,15 @@ public class LitemallOrderService {
         return (int) litemallOrderMapper.countByExample(example);
     }
 
+    public int countByStatus(List<Short> orderStatusArray) {
+        LitemallOrderExample example = new LitemallOrderExample();
+        LitemallOrderExample.Criteria criteria = example.or().andDeletedEqualTo(false);
+        if (orderStatusArray != null && !orderStatusArray.isEmpty()) {
+            criteria.andOrderStatusIn(orderStatusArray);
+        }
+        return (int) litemallOrderMapper.countByExample(example);
+    }
+
     public List<LitemallOrder> queryUnpaid(int minutes) {
         LitemallOrderExample example = new LitemallOrderExample();
         example.or().andOrderStatusEqualTo(OrderUtil.STATUS_CREATE).andDeletedEqualTo(false);
