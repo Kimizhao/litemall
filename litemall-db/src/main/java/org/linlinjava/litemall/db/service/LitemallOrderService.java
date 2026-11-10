@@ -92,6 +92,10 @@ public class LitemallOrderService {
     }
 
     public List<LitemallOrder> querySelective(Integer userId, String orderSn, LocalDateTime start, LocalDateTime end, List<Short> orderStatusArray, Integer page, Integer limit, String sort, String order) {
+        return querySelective(userId, orderSn, start, end, null, orderStatusArray, page, limit, sort, order);
+    }
+
+    public List<LitemallOrder> querySelective(Integer userId, String orderSn, LocalDateTime start, LocalDateTime end, LocalDate fulfillmentDate, List<Short> orderStatusArray, Integer page, Integer limit, String sort, String order) {
         LitemallOrderExample example = new LitemallOrderExample();
         LitemallOrderExample.Criteria criteria = example.createCriteria();
 
@@ -107,6 +111,9 @@ public class LitemallOrderService {
         if(end != null){
             criteria.andAddTimeLessThanOrEqualTo(end);
         }
+        if (fulfillmentDate != null) {
+            criteria.andFulfillmentDateEqualTo(fulfillmentDate);
+        }
         if (orderStatusArray != null && orderStatusArray.size() != 0) {
             criteria.andOrderStatusIn(orderStatusArray);
         }
@@ -118,6 +125,68 @@ public class LitemallOrderService {
 
         PageHelper.startPage(page, limit);
         return litemallOrderMapper.selectByExample(example);
+    }
+
+    public List<LitemallOrder> queryByPayTime(LocalDateTime start, LocalDateTime end, List<Short> orderStatusArray) {
+        LitemallOrderExample example = new LitemallOrderExample();
+        LitemallOrderExample.Criteria criteria = example.createCriteria();
+
+        if (start != null) {
+            criteria.andPayTimeGreaterThanOrEqualTo(start);
+        }
+        if (end != null) {
+            criteria.andPayTimeLessThanOrEqualTo(end);
+        }
+        if (orderStatusArray != null && !orderStatusArray.isEmpty()) {
+            criteria.andOrderStatusIn(orderStatusArray);
+        }
+        criteria.andDeletedEqualTo(false);
+        example.setOrderByClause("pay_time desc");
+        return litemallOrderMapper.selectByExample(example);
+    }
+
+    public List<LitemallOrder> queryByRefundTime(LocalDateTime start, LocalDateTime end) {
+        LitemallOrderExample example = new LitemallOrderExample();
+        LitemallOrderExample.Criteria criteria = example.createCriteria();
+
+        if (start != null) {
+            criteria.andRefundTimeGreaterThanOrEqualTo(start);
+        }
+        if (end != null) {
+            criteria.andRefundTimeLessThanOrEqualTo(end);
+        }
+        criteria.andDeletedEqualTo(false);
+        example.setOrderByClause("refund_time desc");
+        return litemallOrderMapper.selectByExample(example);
+    }
+
+    public List<LitemallOrder> queryByFulfillmentDate(LocalDate fulfillmentDate, List<Short> orderStatusArray) {
+        LitemallOrderExample example = new LitemallOrderExample();
+        LitemallOrderExample.Criteria criteria = example.createCriteria();
+
+        if (fulfillmentDate != null) {
+            criteria.andFulfillmentDateEqualTo(fulfillmentDate);
+        }
+        if (orderStatusArray != null && !orderStatusArray.isEmpty()) {
+            criteria.andOrderStatusIn(orderStatusArray);
+        }
+        criteria.andDeletedEqualTo(false);
+        example.setOrderByClause("id desc");
+        return litemallOrderMapper.selectByExample(example);
+    }
+
+    public int countByFulfillmentDate(LocalDate fulfillmentDate, List<Short> orderStatusArray) {
+        LitemallOrderExample example = new LitemallOrderExample();
+        LitemallOrderExample.Criteria criteria = example.createCriteria();
+
+        if (fulfillmentDate != null) {
+            criteria.andFulfillmentDateEqualTo(fulfillmentDate);
+        }
+        if (orderStatusArray != null && !orderStatusArray.isEmpty()) {
+            criteria.andOrderStatusIn(orderStatusArray);
+        }
+        criteria.andDeletedEqualTo(false);
+        return (int) litemallOrderMapper.countByExample(example);
     }
 
     public int updateWithOptimisticLocker(LitemallOrder order) {

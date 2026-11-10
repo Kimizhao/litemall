@@ -382,6 +382,7 @@ public class WxOrderService {
         order.setConsignee(checkedAddress.getName());
         order.setMobile(checkedAddress.getTel());
         order.setMessage(message);
+        order.setFulfillmentDate(OrderUtil.calculateFulfillmentDate(LocalDateTime.now(), message));
         String detailedAddress = checkedAddress.getProvince() + checkedAddress.getCity() + checkedAddress.getCounty() + " " + checkedAddress.getAddressDetail();
         order.setAddress(detailedAddress);
         order.setGoodsPrice(checkedGoodsPrice);

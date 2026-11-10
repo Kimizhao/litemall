@@ -1,6 +1,7 @@
 package org.linlinjava.litemall.db.domain;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -102,6 +103,11 @@ public class LitemallOrder {
      * @mbg.generated
      */
     private String message;
+
+    /**
+     * This field corresponds to the database column litemall_order.fulfillment_date
+     */
+    private LocalDate fulfillmentDate;
 
     /**
      *
@@ -515,6 +521,14 @@ public class LitemallOrder {
      */
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public LocalDate getFulfillmentDate() {
+        return fulfillmentDate;
+    }
+
+    public void setFulfillmentDate(LocalDate fulfillmentDate) {
+        this.fulfillmentDate = fulfillmentDate;
     }
 
     /**
@@ -1078,6 +1092,7 @@ public class LitemallOrder {
         sb.append(", mobile=").append(mobile);
         sb.append(", address=").append(address);
         sb.append(", message=").append(message);
+        sb.append(", fulfillmentDate=").append(fulfillmentDate);
         sb.append(", goodsPrice=").append(goodsPrice);
         sb.append(", freightPrice=").append(freightPrice);
         sb.append(", couponPrice=").append(couponPrice);
@@ -1131,6 +1146,7 @@ public class LitemallOrder {
             && (this.getMobile() == null ? other.getMobile() == null : this.getMobile().equals(other.getMobile()))
             && (this.getAddress() == null ? other.getAddress() == null : this.getAddress().equals(other.getAddress()))
             && (this.getMessage() == null ? other.getMessage() == null : this.getMessage().equals(other.getMessage()))
+            && (this.getFulfillmentDate() == null ? other.getFulfillmentDate() == null : this.getFulfillmentDate().equals(other.getFulfillmentDate()))
             && (this.getGoodsPrice() == null ? other.getGoodsPrice() == null : this.getGoodsPrice().equals(other.getGoodsPrice()))
             && (this.getFreightPrice() == null ? other.getFreightPrice() == null : this.getFreightPrice().equals(other.getFreightPrice()))
             && (this.getCouponPrice() == null ? other.getCouponPrice() == null : this.getCouponPrice().equals(other.getCouponPrice()))
@@ -1174,6 +1190,7 @@ public class LitemallOrder {
         result = prime * result + ((getMobile() == null) ? 0 : getMobile().hashCode());
         result = prime * result + ((getAddress() == null) ? 0 : getAddress().hashCode());
         result = prime * result + ((getMessage() == null) ? 0 : getMessage().hashCode());
+        result = prime * result + ((getFulfillmentDate() == null) ? 0 : getFulfillmentDate().hashCode());
         result = prime * result + ((getGoodsPrice() == null) ? 0 : getGoodsPrice().hashCode());
         result = prime * result + ((getFreightPrice() == null) ? 0 : getFreightPrice().hashCode());
         result = prime * result + ((getCouponPrice() == null) ? 0 : getCouponPrice().hashCode());
@@ -1283,6 +1300,7 @@ public class LitemallOrder {
         mobile("mobile", "mobile", "VARCHAR", false),
         address("address", "address", "VARCHAR", false),
         message("message", "message", "VARCHAR", false),
+        fulfillmentDate("fulfillment_date", "fulfillmentDate", "DATE", false),
         goodsPrice("goods_price", "goodsPrice", "DECIMAL", false),
         freightPrice("freight_price", "freightPrice", "DECIMAL", false),
         couponPrice("coupon_price", "couponPrice", "DECIMAL", false),

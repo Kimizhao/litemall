@@ -84,21 +84,53 @@
         </view>
       </view>
 
+      <!-- 待制作子分类开关: [今日出餐] vs [明日预订] (备料模式) -->
+      <view class="scope-toggle-bar" v-if="orderFilterType === 1">
+        <view 
+          class="scope-chip" 
+          :class="{ active: fulfillmentScope === 'today' }" 
+          @tap="switchFulfillmentScope('today')"
+        >
+          <text class="scope-icon">🍳</text>
+          <text class="scope-title">今日出餐</text>
+          <text class="scope-badge" v-if="orderCounts.todayMaking > 0">{{ orderCounts.todayMaking }}</text>
+        </view>
+        <view 
+          class="scope-chip chip-tomorrow" 
+          :class="{ active: fulfillmentScope === 'tomorrow' }" 
+          @tap="switchFulfillmentScope('tomorrow')"
+        >
+          <text class="scope-icon">🌙</text>
+          <text class="scope-title">明日预订</text>
+          <text class="scope-badge" v-if="orderCounts.tomorrowMaking > 0">{{ orderCounts.tomorrowMaking }}</text>
+        </view>
+        <view 
+          class="scope-chip" 
+          :class="{ active: fulfillmentScope === 'all' }" 
+          @tap="switchFulfillmentScope('all')"
+        >
+          <text class="scope-title">全部待制</text>
+        </view>
+      </view>
+
       <!-- Batch Action Bar (待制作/待核销) -->
       <view class="order-batch-bar" v-if="orderFilterType === 1 || orderFilterType === 2">
         <view class="batch-bar-left">
           <text class="batch-bar-hint">
-            {{ orderFilterType === 1 ? '待制作订单' : '待核销订单' }} ({{ orderFilterType === 1 ? orderCounts.making : orderCounts.pickup }})
+            {{ orderFilterType === 1 ? (fulfillmentScope === 'tomorrow' ? '明日预订单 (夜间备料模式)' : '今日待制作工单') : '待核销订单' }} ({{ orderFilterType === 1 ? orderList.length : orderCounts.pickup }})
           </text>
         </view>
         <view class="batch-bar-right">
           <button 
             class="batch-action-btn btn-ready" 
-            v-if="orderFilterType === 1" 
+            v-if="orderFilterType === 1 && fulfillmentScope !== 'tomorrow'" 
             @tap="onBatchReady"
           >
             一键出餐
           </button>
+          <view class="tomorrow-locked-tag" v-if="orderFilterType === 1 && fulfillmentScope === 'tomorrow'">
+            <text class="locked-text">🔒 备料模式·已锁定出餐</text>
+          </view>
           <button 
             class="batch-action-btn btn-verify" 
             v-if="orderFilterType === 2" 
@@ -123,6 +155,7 @@
               <text class="order-sn-text">{{ order.orderSn }}</text>
             </view>
             <view class="card-header-right">
+              <text class="fulfillment-badge" v-if="order.fulfillmentDate">📅 {{ order.fulfillmentDate }}</text>
               <text class="status-badge" :class="'status-' + order.orderStatus">{{ order.orderStatusText }}</text>
               <text class="view-detail-arrow">›</text>
             </view>
@@ -324,23 +357,63 @@
     <view v-if="currentTab === 2" class="tab-content dashboard-module">
       <!-- Performance Cards -->
       <view class="perf-section">
-        <text class="section-title">📊 今日营业简报</text>
+        <!-- 上层: 今日履约出餐 (后厨运营) -->
+        <view class="section-title-row">
+          <text class="section-title">🍳 今日履约出餐</text>
+          <text class="section-sub-hint">后厨生产与交付口径</text>
+        </view>
         <view class="perf-grid">
-          <view class="perf-card">
-            <text class="perf-val">¥{{ dashboardData.stats.todayTurnover || 0 }}</text>
-            <text class="perf-label">今日实收金额</text>
+          <view class="perf-card highlight-card">
+            <text class="perf-val highlight-val">¥{{ dashboardData.stats.todayFulfillmentTurnover || dashboardData.stats.todayTurnover || 0 }}</text>
+            <text class="perf-label">今日出餐货值</text>
           </view>
           <view class="perf-card">
-            <text class="perf-val">{{ dashboardData.stats.todayOrderCount || 0 }}</text>
-            <text class="perf-label">今日有效订单</text>
+            <text class="perf-val">{{ dashboardData.stats.todayFulfillmentOrderCount || dashboardData.stats.todayOrderCount || 0 }}</text>
+            <text class="perf-label">今日计划出餐单</text>
           </view>
           <view class="perf-card">
-            <text class="perf-val">{{ dashboardData.stats.pendingMakingCount || 0 }}</text>
+            <text class="perf-val" style="color: #E07A5F;">{{ dashboardData.stats.todayMakingCount || 0 }}</text>
             <text class="perf-label">待制作餐品</text>
           </view>
           <view class="perf-card">
-            <text class="perf-val">{{ dashboardData.stats.pendingPickupCount || 0 }}</text>
+            <text class="perf-val">{{ dashboardData.stats.todayPickupCount || 0 }}</text>
             <text class="perf-label">待提货订单</text>
+          </view>
+        </view>
+
+        <!-- 明日预订备料提示条 -->
+        <view class="tomorrow-preorder-card" v-if="dashboardData.stats.tomorrowPreorderCount > 0">
+          <view class="preorder-card-left">
+            <text class="preorder-card-icon">🌙</text>
+            <view class="preorder-card-info">
+              <text class="preorder-card-title">明日预订单 (夜间备料)</text>
+              <text class="preorder-card-desc">已有 {{ dashboardData.stats.tomorrowPreorderCount }} 笔预定明日出餐</text>
+            </view>
+          </view>
+          <text class="preorder-card-val">¥{{ dashboardData.stats.tomorrowPreorderTurnover || 0 }}</text>
+        </view>
+
+        <!-- 下层: 今日收银流水 (对账财务) -->
+        <view class="section-title-row cashflow-row">
+          <text class="section-title">💰 今日收银流水</text>
+          <text class="section-sub-hint">对齐微信商户实际到账</text>
+        </view>
+        <view class="perf-grid">
+          <view class="perf-card">
+            <text class="perf-val">¥{{ dashboardData.stats.todayCashTurnover || 0 }}</text>
+            <text class="perf-label">今日微信实收</text>
+          </view>
+          <view class="perf-card">
+            <text class="perf-val">{{ dashboardData.stats.todayPaidOrderCount || 0 }}</text>
+            <text class="perf-label">今日付款单数</text>
+          </view>
+          <view class="perf-card">
+            <text class="perf-val" :style="{ color: dashboardData.stats.todayRefundAmount > 0 ? '#C0392B' : '#6F4E37' }">¥{{ dashboardData.stats.todayRefundAmount || 0 }}</text>
+            <text class="perf-label">今日退款金额</text>
+          </view>
+          <view class="perf-card">
+            <text class="perf-val" :style="{ color: dashboardData.stats.pendingRefundCount > 0 ? '#E07A5F' : '#6F4E37' }">{{ dashboardData.stats.pendingRefundCount || 0 }}</text>
+            <text class="perf-label">待处理退款</text>
           </view>
         </view>
       </view>
@@ -890,10 +963,13 @@ const currentTab = ref(0) // 0: 订单流水, 1: 商品与类目, 2: 门店与�
 
 // Order Sub-Tabs & Filter
 const orderFilterType = ref(1) // 1: 待制作, 2: 待取餐, 4: 待退款, 3: 已完成, 0: 全部
+const fulfillmentScope = ref('today') // 'today': 今日出餐, 'tomorrow': 明日预订, 'all': 全部
 const orderList = ref([])
 const isRefreshing = ref(false)
 const orderCounts = reactive({
   making: 0,
+  todayMaking: 0,
+  tomorrowMaking: 0,
   pickup: 0,
   refund: 0,
   pendingTotal: 0
@@ -985,10 +1061,22 @@ const selectableCategories = computed(() => {
 // Dashboard State
 const dashboardData = reactive({
   stats: {
+    todayFulfillmentTurnover: 0,
+    todayFulfillmentOrderCount: 0,
+    todayMakingCount: 0,
+    todayPickupCount: 0,
+    todayCompletedCount: 0,
+    tomorrowPreorderCount: 0,
+    tomorrowPreorderTurnover: 0,
+    todayCashTurnover: 0,
+    todayPaidOrderCount: 0,
+    todayRefundAmount: 0,
+    todayRefundCount: 0,
     todayTurnover: 0,
     todayOrderCount: 0,
     pendingMakingCount: 0,
-    pendingPickupCount: 0
+    pendingPickupCount: 0,
+    pendingRefundCount: 0
   },
   printer: {
     name: '前台出票机',
@@ -1211,13 +1299,17 @@ function switchMainTab(idx) {
 async function loadOrders() {
   isRefreshing.value = true
   try {
+    const params = {
+      showType: orderFilterType.value,
+      page: 1,
+      limit: 50
+    }
+    if (orderFilterType.value === 1) {
+      params.fulfillmentScope = fulfillmentScope.value
+    }
     const res = await request({
       url: api.AdminOrderList,
-      data: {
-        showType: orderFilterType.value,
-        page: 1,
-        limit: 30
-      }
+      data: params
     })
     if (res) {
       orderList.value = res.list || []
@@ -1232,6 +1324,8 @@ async function loadOrders() {
 
 function updateOrderCounts(data) {
   if (!data) return
+  orderCounts.todayMaking = data.todayMakingCount || 0
+  orderCounts.tomorrowMaking = data.tomorrowMakingCount || 0
   orderCounts.making = data.pendingMakingCount || 0
   orderCounts.pickup = data.pendingPickupCount || 0
   orderCounts.refund = data.pendingRefundCount || 0
@@ -1243,12 +1337,21 @@ function switchOrderFilter(type) {
   loadOrders()
 }
 
+function switchFulfillmentScope(scope) {
+  fulfillmentScope.value = scope
+  loadOrders()
+}
+
 async function onRefreshOrders() {
   await loadOrders()
 }
 
 // Batch Mark Ready (一键出餐)
 async function onBatchReady() {
+  if (fulfillmentScope.value === 'tomorrow') {
+    uni.showToast({ title: '当前为明日预订模式，不可提前出餐', icon: 'none' })
+    return
+  }
   const targetOrders = orderList.value.filter(o => o.orderStatus === 201)
   if (targetOrders.length === 0) {
     uni.showToast({ title: '当前没有待制作订单', icon: 'none' })
@@ -1257,7 +1360,7 @@ async function onBatchReady() {
 
   uni.showModal({
     title: '一键出餐',
-    content: `确定将列表中的 ${targetOrders.length} 笔待制作订单全部标记出餐吗？`,
+    content: `确定将列表中的 ${targetOrders.length} 笔今日待制作订单全部标记出餐吗？`,
     confirmColor: '#6F4E37',
     success: async (mRes) => {
       if (mRes.confirm) {
@@ -2325,6 +2428,78 @@ function formatTime(str) {
   background: #D9534F;
 }
 
+/* Order Scope Toggle Bar */
+.scope-toggle-bar {
+  display: flex;
+  gap: 14rpx;
+  padding: 12rpx 20rpx 4rpx;
+}
+
+.scope-chip {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 10rpx 22rpx;
+  background: #ffffff;
+  border-radius: 32rpx;
+  border: 1rpx solid #EFE4D6;
+  font-size: 24rpx;
+  color: #8C7063;
+  font-weight: 600;
+  box-shadow: 0 2rpx 6rpx rgba(111, 78, 55, 0.04);
+}
+
+.scope-chip.active {
+  background: #6F4E37;
+  color: #FAF6EE;
+  border-color: #6F4E37;
+  box-shadow: 0 4rpx 10rpx rgba(111, 78, 55, 0.2);
+}
+
+.scope-chip.chip-tomorrow.active {
+  background: #E07A5F;
+  border-color: #E07A5F;
+  box-shadow: 0 4rpx 10rpx rgba(224, 122, 95, 0.25);
+}
+
+.scope-badge {
+  background: rgba(224, 122, 95, 0.15);
+  color: #E07A5F;
+  font-size: 20rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 14rpx;
+  font-weight: 700;
+}
+
+.scope-chip.active .scope-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #FAF6EE;
+}
+
+.tomorrow-locked-tag {
+  display: flex;
+  align-items: center;
+  padding: 10rpx 18rpx;
+  background: #F5EEDF;
+  border-radius: 20rpx;
+}
+
+.locked-text {
+  font-size: 22rpx;
+  color: #8C7063;
+  font-weight: 600;
+}
+
+.fulfillment-badge {
+  font-size: 20rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 10rpx;
+  background: #F5EEDF;
+  color: #6F4E37;
+  font-weight: 700;
+  margin-right: 10rpx;
+}
+
 /* Order Batch Bar */
 .order-batch-bar {
   display: flex;
@@ -2970,8 +3145,78 @@ function formatTime(str) {
   font-size: 28rpx;
   font-weight: 700;
   color: #4A3525;
-  margin-bottom: 16rpx;
+  margin-bottom: 0;
   display: block;
+}
+
+.section-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.section-sub-hint {
+  font-size: 20rpx;
+  color: #A18276;
+  font-weight: 500;
+}
+
+.cashflow-row {
+  margin-top: 24rpx;
+}
+
+.highlight-card {
+  background: linear-gradient(135deg, #FAF6EE 0%, #FFFFFF 100%);
+  border: 1rpx solid #E6D5B8;
+}
+
+.highlight-val {
+  color: #E07A5F;
+}
+
+.tomorrow-preorder-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #FFFDF9;
+  border: 1rpx dashed #E07A5F;
+  border-radius: 18rpx;
+  padding: 18rpx 24rpx;
+  margin-top: 14rpx;
+}
+
+.preorder-card-left {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+}
+
+.preorder-card-icon {
+  font-size: 32rpx;
+}
+
+.preorder-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2rpx;
+}
+
+.preorder-card-title {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #4A3525;
+}
+
+.preorder-card-desc {
+  font-size: 20rpx;
+  color: #A18276;
+}
+
+.preorder-card-val {
+  font-size: 32rpx;
+  font-weight: 800;
+  color: #E07A5F;
 }
 
 .perf-grid {

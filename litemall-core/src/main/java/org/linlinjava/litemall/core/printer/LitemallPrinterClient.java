@@ -7,9 +7,11 @@ import org.linlinjava.litemall.db.domain.LitemallPrinter;
 import org.linlinjava.litemall.db.domain.LitemallOrder;
 import org.linlinjava.litemall.db.domain.LitemallOrderGoods;
 import org.linlinjava.litemall.db.service.LitemallPrinterService;
+import org.linlinjava.litemall.db.util.OrderUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import java.time.LocalDate;
 import java.util.List;
 import java.math.BigDecimal;
 import java.util.Arrays;
@@ -163,6 +165,10 @@ public class LitemallPrinterClient {
         StringBuilder sb = new StringBuilder();
         sb.append("<C><L1>小满食光</L1></C>\n");
         sb.append("<C>-- 订单结账单 --</C>\n");
+        LocalDate fDate = order.getFulfillmentDate() != null ? order.getFulfillmentDate() : OrderUtil.calculateFulfillmentDate(order.getAddTime(), order.getMessage());
+        if (fDate != null) {
+            sb.append("<C><L1>【履约送达: ").append(fDate).append("】</L1></C>\n");
+        }
         String timeStr = "";
         if (order.getAddTime() != null) {
             timeStr = order.getAddTime().toString().replace("T", " ");

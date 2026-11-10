@@ -1,6 +1,7 @@
 package org.linlinjava.litemall.db.domain;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -1445,6 +1446,71 @@ public class LitemallOrderExample {
 
         public Criteria andMessageNotBetween(String value1, String value2) {
             addCriterion("message not between", value1, value2, "message");
+            return (Criteria) this;
+        }
+
+        public Criteria andFulfillmentDateIsNull() {
+            addCriterion("fulfillment_date is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andFulfillmentDateIsNotNull() {
+            addCriterion("fulfillment_date is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andFulfillmentDateEqualTo(LocalDate value) {
+            addCriterion("fulfillment_date =", value, "fulfillmentDate");
+            return (Criteria) this;
+        }
+
+        public Criteria andFulfillmentDateEqualToColumn(LitemallOrder.Column column) {
+            addCriterion(new StringBuilder("fulfillment_date = ").append(column.getEscapedColumnName()).toString());
+            return (Criteria) this;
+        }
+
+        public Criteria andFulfillmentDateNotEqualTo(LocalDate value) {
+            addCriterion("fulfillment_date <>", value, "fulfillmentDate");
+            return (Criteria) this;
+        }
+
+        public Criteria andFulfillmentDateGreaterThan(LocalDate value) {
+            addCriterion("fulfillment_date >", value, "fulfillmentDate");
+            return (Criteria) this;
+        }
+
+        public Criteria andFulfillmentDateGreaterThanOrEqualTo(LocalDate value) {
+            addCriterion("fulfillment_date >=", value, "fulfillmentDate");
+            return (Criteria) this;
+        }
+
+        public Criteria andFulfillmentDateLessThan(LocalDate value) {
+            addCriterion("fulfillment_date <", value, "fulfillmentDate");
+            return (Criteria) this;
+        }
+
+        public Criteria andFulfillmentDateLessThanOrEqualTo(LocalDate value) {
+            addCriterion("fulfillment_date <=", value, "fulfillmentDate");
+            return (Criteria) this;
+        }
+
+        public Criteria andFulfillmentDateIn(List<LocalDate> values) {
+            addCriterion("fulfillment_date in", values, "fulfillmentDate");
+            return (Criteria) this;
+        }
+
+        public Criteria andFulfillmentDateNotIn(List<LocalDate> values) {
+            addCriterion("fulfillment_date not in", values, "fulfillmentDate");
+            return (Criteria) this;
+        }
+
+        public Criteria andFulfillmentDateBetween(LocalDate value1, LocalDate value2) {
+            addCriterion("fulfillment_date between", value1, value2, "fulfillmentDate");
+            return (Criteria) this;
+        }
+
+        public Criteria andFulfillmentDateNotBetween(LocalDate value1, LocalDate value2) {
+            addCriterion("fulfillment_date not between", value1, value2, "fulfillmentDate");
             return (Criteria) this;
         }
 

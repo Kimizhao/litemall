@@ -2,6 +2,9 @@ package org.linlinjava.litemall.db.util;
 
 import org.linlinjava.litemall.db.domain.LitemallOrder;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -185,5 +188,39 @@ public class OrderUtil {
 
     public static boolean isAutoConfirmStatus(LitemallOrder litemallOrder) {
         return OrderUtil.STATUS_AUTO_CONFIRM == litemallOrder.getOrderStatus().shortValue();
+    }
+
+    /**
+     * 计算订单约定的履约日期（Fulfillment Date）
+     * 业务规则：
+     * 1. 市二早餐 (07:00-08:00): 07:00 之后下单算次日(D+1)，07:00 之前下单算当天(D)
+     * 2. 师大送餐 (17:00-18:00): 16:30 截单前下单算当天(D)，16:30 之后下单算次日(D+1)
+     * 3. 备注显式包含"明天": 算次日(D+1)
+     * 4. 到店自取/普通订单: 18:00 之后下单算次日(D+1)，否则算当天(D)
+     */
+    public static LocalDate calculateFulfillmentDate(LocalDateTime orderTime, String message) {
+        if (orderTime == null) {
+            orderTime = LocalDateTime.now();
+        }
+        LocalDate baseDate = orderTime.toLocalDate();
+        LocalTime time = orderTime.toLocalTime();
+
+        if (message == null) {
+            message = "";
+        }
+
+        if (message.contains("市二")) {
+            return time.isAfter(LocalTime.of(7, 0)) ? baseDate.plusDays(1) : baseDate;
+        }
+
+        if (message.contains("师大")) {
+            return time.isAfter(LocalTime.of(16, 30)) ? baseDate.plusDays(1) : baseDate;
+        }
+
+        if (message.contains("明天")) {
+            return baseDate.plusDays(1);
+        }
+
+        return time.isAfter(LocalTime.of(18, 0)) ? baseDate.plusDays(1) : baseDate;
     }
 }

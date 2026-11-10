@@ -598,6 +598,7 @@ CREATE TABLE `litemall_order` (
   `mobile` varchar(63) NOT NULL COMMENT '收货人手机号',
   `address` varchar(127) NOT NULL COMMENT '收货具体地址',
   `message` varchar(512) NOT NULL DEFAULT '' COMMENT '用户订单留言',
+  `fulfillment_date` date DEFAULT NULL COMMENT '履约日期(送餐/自提业务发生日)',
   `goods_price` decimal(10,2) NOT NULL COMMENT '商品总费用',
   `freight_price` decimal(10,2) NOT NULL COMMENT '配送费用',
   `coupon_price` decimal(10,2) NOT NULL COMMENT '优惠券减免',

@@ -23,6 +23,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -69,6 +70,7 @@ public class WxAdminOrderController {
     public Object list(@LoginUser Integer userId,
                        @RequestParam(required = false) String showType,
                        @RequestParam(required = false) String keyword,
+                       @RequestParam(required = false) String fulfillmentScope,
                        @RequestParam(defaultValue = "1") Integer page,
                        @RequestParam(defaultValue = "10") Integer limit) {
         if (!adminAuthService.isMerchantAdmin(userId)) {
@@ -93,7 +95,22 @@ public class WxAdminOrderController {
             orderStatus = Collections.singletonList(OrderUtil.STATUS_REFUND);
         }
 
-        List<LitemallOrder> orderList = orderService.querySelective(null, keyword, null, null, orderStatus, page, limit, "add_time", "desc");
+        // 解析履约日期范围过滤 (today: 仅今日, tomorrow: 仅明日, all: 不限日期)
+        LocalDate targetFulfillmentDate = null;
+        if ("today".equalsIgnoreCase(fulfillmentScope)) {
+            targetFulfillmentDate = LocalDate.now();
+        } else if ("tomorrow".equalsIgnoreCase(fulfillmentScope)) {
+            targetFulfillmentDate = LocalDate.now().plusDays(1);
+        } else if ("all".equalsIgnoreCase(fulfillmentScope)) {
+            targetFulfillmentDate = null;
+        } else {
+            // 待制作列表默认聚焦今日需出餐订单（避免夜间预订单干扰后厨当前工单）
+            if (type == 1 && StringUtils.isEmpty(keyword)) {
+                targetFulfillmentDate = LocalDate.now();
+            }
+        }
+
+        List<LitemallOrder> orderList = orderService.querySelective(null, keyword, null, null, targetFulfillmentDate, orderStatus, page, limit, "add_time", "desc");
         List<Map<String, Object>> orderVoList = new ArrayList<>(orderList.size());
 
         for (LitemallOrder order : orderList) {
@@ -105,6 +122,7 @@ public class WxAdminOrderController {
             vo.put("actualPrice", order.getActualPrice());
             vo.put("goodsPrice", order.getGoodsPrice());
             vo.put("message", order.getMessage());
+            vo.put("fulfillmentDate", order.getFulfillmentDate());
             vo.put("consignee", order.getConsignee());
             vo.put("mobile", order.getMobile());
             vo.put("address", order.getAddress());
@@ -122,14 +140,19 @@ public class WxAdminOrderController {
             orderVoList.add(vo);
         }
 
-        // 统计实时待办订单数
-        int pendingMakingCount = orderService.countByStatus(Collections.singletonList(OrderUtil.STATUS_PAY));
+        // 统计实时待办订单数 (区分今日制作与明日预订)
+        int todayMakingCount = orderService.countByFulfillmentDate(LocalDate.now(), Collections.singletonList(OrderUtil.STATUS_PAY));
+        int tomorrowMakingCount = orderService.countByFulfillmentDate(LocalDate.now().plusDays(1), Collections.singletonList(OrderUtil.STATUS_PAY));
+        int totalMakingCount = orderService.countByStatus(Collections.singletonList(OrderUtil.STATUS_PAY));
         int pendingPickupCount = orderService.countByStatus(Collections.singletonList(OrderUtil.STATUS_SHIP));
         int pendingRefundCount = orderService.countByStatus(Collections.singletonList(OrderUtil.STATUS_REFUND));
 
         Map<String, Object> data = new HashMap<>();
         data.put("list", orderVoList);
-        data.put("pendingMakingCount", pendingMakingCount);
+        data.put("todayMakingCount", todayMakingCount);
+        data.put("tomorrowMakingCount", tomorrowMakingCount);
+        data.put("totalMakingCount", totalMakingCount);
+        data.put("pendingMakingCount", todayMakingCount); // 默认工作台角标展示今日待制作
         data.put("pendingPickupCount", pendingPickupCount);
         data.put("pendingRefundCount", pendingRefundCount);
         return ResponseUtil.ok(data);
@@ -227,7 +250,8 @@ public class WxAdminOrderController {
 
         List<Integer> orderIds = JacksonUtil.parseIntegerList(body, "orderIds");
         if (orderIds == null || orderIds.isEmpty()) {
-            List<LitemallOrder> payOrders = orderService.querySelective(null, null, null, null, Collections.singletonList(OrderUtil.STATUS_PAY), 1, 100, "id", "asc");
+            // 安全限制：默认一键出餐只针对【今日需履约】的待制作订单，绝对不提前出库明日预订单
+            List<LitemallOrder> payOrders = orderService.queryByFulfillmentDate(LocalDate.now(), Collections.singletonList(OrderUtil.STATUS_PAY));
             orderIds = new ArrayList<>();
             for (LitemallOrder o : payOrders) {
                 orderIds.add(o.getId());

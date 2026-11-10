@@ -48,36 +48,95 @@ public class WxAdminDashboardController {
             return ResponseUtil.unauthz();
         }
 
-        LocalDateTime todayStart = LocalDate.now().atStartOfDay();
+        LocalDate today = LocalDate.now();
+        LocalDate tomorrow = today.plusDays(1);
+        LocalDateTime todayStart = today.atStartOfDay();
         LocalDateTime now = LocalDateTime.now();
 
-        // 查询今日已支付的订单 (201, 301, 401, 402)
-        List<Short> paidStatuses = Arrays.asList(
+        // 有效履约订单状态 (201 已支付/待制作, 301 待取餐/配送中, 401 已确认, 402 系统自动确认)
+        List<Short> validFulfillmentStatuses = Arrays.asList(
                 OrderUtil.STATUS_PAY,
                 OrderUtil.STATUS_SHIP,
                 OrderUtil.STATUS_CONFIRM,
                 OrderUtil.STATUS_AUTO_CONFIRM
         );
 
-        List<LitemallOrder> todayOrders = orderService.querySelective(null, null, todayStart, now, paidStatuses, 1, 1000, "id", "desc");
-        int todayOrderCount = todayOrders.size();
-        BigDecimal todayTurnover = BigDecimal.ZERO;
-        for (LitemallOrder o : todayOrders) {
+        // 1. 今日履约出餐维度 (按履约日期 = 今日)
+        List<LitemallOrder> todayFulfillmentOrders = orderService.queryByFulfillmentDate(today, validFulfillmentStatuses);
+        int todayFulfillmentOrderCount = todayFulfillmentOrders.size();
+        BigDecimal todayFulfillmentTurnover = BigDecimal.ZERO;
+        int todayMakingCount = 0;
+        int todayPickupCount = 0;
+        int todayCompletedCount = 0;
+
+        for (LitemallOrder o : todayFulfillmentOrders) {
             if (o.getActualPrice() != null) {
-                todayTurnover = todayTurnover.add(o.getActualPrice());
+                todayFulfillmentTurnover = todayFulfillmentTurnover.add(o.getActualPrice());
+            }
+            if (OrderUtil.STATUS_PAY.equals(o.getOrderStatus())) {
+                todayMakingCount++;
+            } else if (OrderUtil.STATUS_SHIP.equals(o.getOrderStatus())) {
+                todayPickupCount++;
+            } else if (OrderUtil.STATUS_CONFIRM.equals(o.getOrderStatus()) || OrderUtil.STATUS_AUTO_CONFIRM.equals(o.getOrderStatus())) {
+                todayCompletedCount++;
             }
         }
 
-        // 待办统计
-        int pendingMakingCount = orderService.countByStatus(Collections.singletonList(OrderUtil.STATUS_PAY));
-        int pendingPickupCount = orderService.countByStatus(Collections.singletonList(OrderUtil.STATUS_SHIP));
+        // 2. 明日预订出餐统计 (按履约日期 = 明日)
+        List<LitemallOrder> tomorrowPreorders = orderService.queryByFulfillmentDate(tomorrow, validFulfillmentStatuses);
+        int tomorrowPreorderCount = tomorrowPreorders.size();
+        BigDecimal tomorrowPreorderTurnover = BigDecimal.ZERO;
+        for (LitemallOrder o : tomorrowPreorders) {
+            if (o.getActualPrice() != null) {
+                tomorrowPreorderTurnover = tomorrowPreorderTurnover.add(o.getActualPrice());
+            }
+        }
+
+        // 3. 今日收银资金流水对账维度 (按微信支付时间 pay_time = 今日)
+        List<LitemallOrder> todayPaidOrders = orderService.queryByPayTime(todayStart, now, validFulfillmentStatuses);
+        int todayPaidOrderCount = todayPaidOrders.size();
+        BigDecimal todayCashTurnover = BigDecimal.ZERO;
+        for (LitemallOrder o : todayPaidOrders) {
+            if (o.getActualPrice() != null) {
+                todayCashTurnover = todayCashTurnover.add(o.getActualPrice());
+            }
+        }
+
+        // 今日退款金额统计 (按 refund_time = 今日)
+        List<LitemallOrder> todayRefundOrders = orderService.queryByRefundTime(todayStart, now);
+        int todayRefundCount = 0;
+        BigDecimal todayRefundAmount = BigDecimal.ZERO;
+        for (LitemallOrder o : todayRefundOrders) {
+            if (o.getRefundAmount() != null && o.getRefundAmount().compareTo(BigDecimal.ZERO) > 0) {
+                todayRefundAmount = todayRefundAmount.add(o.getRefundAmount());
+                todayRefundCount++;
+            }
+        }
+
+        // 全局待处理退款
         int pendingRefundCount = orderService.countByStatus(Collections.singletonList(OrderUtil.STATUS_REFUND));
 
         Map<String, Object> stats = new HashMap<>();
-        stats.put("todayOrderCount", todayOrderCount);
-        stats.put("todayTurnover", todayTurnover);
-        stats.put("pendingMakingCount", pendingMakingCount);
-        stats.put("pendingPickupCount", pendingPickupCount);
+        // 履约出餐维度指标
+        stats.put("todayFulfillmentOrderCount", todayFulfillmentOrderCount);
+        stats.put("todayFulfillmentTurnover", todayFulfillmentTurnover);
+        stats.put("todayMakingCount", todayMakingCount);
+        stats.put("todayPickupCount", todayPickupCount);
+        stats.put("todayCompletedCount", todayCompletedCount);
+        stats.put("tomorrowPreorderCount", tomorrowPreorderCount);
+        stats.put("tomorrowPreorderTurnover", tomorrowPreorderTurnover);
+
+        // 收银对账资金指标
+        stats.put("todayCashTurnover", todayCashTurnover);
+        stats.put("todayPaidOrderCount", todayPaidOrderCount);
+        stats.put("todayRefundAmount", todayRefundAmount);
+        stats.put("todayRefundCount", todayRefundCount);
+
+        // 兼容旧字段
+        stats.put("todayTurnover", todayFulfillmentTurnover);
+        stats.put("todayOrderCount", todayFulfillmentOrderCount);
+        stats.put("pendingMakingCount", todayMakingCount);
+        stats.put("pendingPickupCount", todayPickupCount);
         stats.put("pendingRefundCount", pendingRefundCount);
 
         // 获取云打印机状态
