@@ -113,24 +113,21 @@
         </view>
       </view>
 
-      <!-- Batch Action Bar (待制作/待核销) -->
-      <view class="order-batch-bar" v-if="orderFilterType === 1 || orderFilterType === 2">
+      <!-- Batch Action Bar (待制作/待核销，仅今日出餐与待核销展示) -->
+      <view class="order-batch-bar" v-if="(orderFilterType === 1 && fulfillmentScope === 'today') || orderFilterType === 2">
         <view class="batch-bar-left">
           <text class="batch-bar-hint">
-            {{ orderFilterType === 1 ? (fulfillmentScope === 'tomorrow' ? '明日预订单 (夜间备料模式)' : '今日待制作工单') : '待核销订单' }} ({{ orderFilterType === 1 ? orderList.length : orderCounts.pickup }})
+            {{ orderFilterType === 1 ? '今日待制作工单' : '待核销订单' }} ({{ orderFilterType === 1 ? orderList.length : orderCounts.pickup }})
           </text>
         </view>
         <view class="batch-bar-right">
           <button 
             class="batch-action-btn btn-ready" 
-            v-if="orderFilterType === 1 && fulfillmentScope !== 'tomorrow'" 
+            v-if="orderFilterType === 1" 
             @tap="onBatchReady"
           >
             一键出餐
           </button>
-          <view class="tomorrow-locked-tag" v-if="orderFilterType === 1 && fulfillmentScope === 'tomorrow'">
-            <text class="locked-text">🔒 备料模式·已锁定出餐</text>
-          </view>
           <button 
             class="batch-action-btn btn-verify" 
             v-if="orderFilterType === 2" 
@@ -151,8 +148,7 @@
         <view class="order-card" v-for="order in orderList" :key="order.id" @tap="openOrderDetail(order)" @longpress="onOrderLongPress(order)">
           <view class="card-header">
             <view class="order-sn-col">
-              <text class="pickup-code-tag">取餐码 #{{ order.pickupCode }}</text>
-              <text class="order-sn-text">{{ order.orderSn }}</text>
+              <text class="order-sn-text">单号：{{ order.orderSn }}</text>
             </view>
             <view class="card-header-right">
               <text class="fulfillment-badge" v-if="order.fulfillmentDate">📅 {{ order.fulfillmentDate }}</text>
@@ -358,10 +354,7 @@
       <!-- Performance Cards -->
       <view class="perf-section">
         <!-- 上层: 今日履约出餐 (后厨运营) -->
-        <view class="section-title-row">
-          <text class="section-title">🍳 今日履约出餐</text>
-          <text class="section-sub-hint">后厨生产与交付口径</text>
-        </view>
+        <text class="section-title">🍳 今日履约出餐</text>
         <view class="perf-grid">
           <view class="perf-card highlight-card">
             <text class="perf-val highlight-val">¥{{ dashboardData.stats.todayFulfillmentTurnover || dashboardData.stats.todayTurnover || 0 }}</text>
@@ -394,10 +387,7 @@
         </view>
 
         <!-- 下层: 今日收银流水 (对账财务) -->
-        <view class="section-title-row cashflow-row">
-          <text class="section-title">💰 今日收银流水</text>
-          <text class="section-sub-hint">对齐微信商户实际到账</text>
-        </view>
+        <text class="section-title cashflow-title">💰 今日收银流水</text>
         <view class="perf-grid">
           <view class="perf-card">
             <text class="perf-val">¥{{ dashboardData.stats.todayCashTurnover || 0 }}</text>
@@ -2576,21 +2566,17 @@ function formatTime(str) {
   display: flex;
   align-items: center;
   gap: 12rpx;
-}
-
-.pickup-code-tag {
-  background: #FAF4EB;
-  color: #6F4E37;
-  border: 1rpx solid #E6D7C3;
-  padding: 4rpx 12rpx;
-  border-radius: 8rpx;
-  font-size: 24rpx;
-  font-weight: 700;
+  flex: 1;
+  min-width: 0;
+  margin-right: 12rpx;
 }
 
 .order-sn-text {
   font-size: 24rpx;
   color: #8C7063;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .status-badge {
@@ -3145,24 +3131,11 @@ function formatTime(str) {
   font-size: 28rpx;
   font-weight: 700;
   color: #4A3525;
-  margin-bottom: 0;
+  margin-bottom: 16rpx;
   display: block;
 }
 
-.section-title-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 16rpx;
-}
-
-.section-sub-hint {
-  font-size: 20rpx;
-  color: #A18276;
-  font-weight: 500;
-}
-
-.cashflow-row {
+.cashflow-title {
   margin-top: 24rpx;
 }
 
@@ -3989,6 +3962,7 @@ function formatTime(str) {
   display: flex;
   align-items: center;
   gap: 10rpx;
+  flex-shrink: 0;
 }
 
 .view-detail-arrow {
