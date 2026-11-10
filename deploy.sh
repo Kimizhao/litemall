@@ -39,7 +39,7 @@ fi
 
 # 2. rsync同步前端产物
 info "2. 同步前端编译产物到云服务器..."
-# rsync -avz --delete "${FRONTEND_DIR}/dist/build/h5/" "${REMOTE_HOST}:${REMOTE_DIR}/h5/"
+rsync -avz --delete "${FRONTEND_DIR}/dist/build/h5/" "${REMOTE_HOST}:${REMOTE_DIR}/h5/"
 success "前端产物同步完成。"
 
 # 3. 编译后端jar包
