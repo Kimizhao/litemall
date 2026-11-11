@@ -139,7 +139,17 @@
       </view>
 
       <!-- Order List -->
-      <scroll-view scroll-y class="order-list-scroll" refresher-enabled :refresher-triggered="isRefreshing" @refresherrefresh="onRefreshOrders">
+      <scroll-view 
+        scroll-y 
+        class="order-list-scroll" 
+        refresher-enabled 
+        :refresher-triggered="isRefreshing" 
+        refresher-default-style="black"
+        refresher-background="#FAF6EE"
+        @refresherrefresh="onRefreshOrders"
+        @refresherrestore="onRestoreOrders"
+        @refresherabort="onAbortOrders"
+      >
         <view v-if="orderList.length === 0" class="empty-state">
           <text class="empty-icon">☕</text>
           <text class="empty-text">当前暂无对应订单</text>
@@ -307,7 +317,17 @@
       </view>
 
       <!-- 4. 商品列表 (Goods List) -->
-      <scroll-view scroll-y class="goods-list-scroll" refresher-enabled :refresher-triggered="isRefreshingGoods" @refresherrefresh="onRefreshGoods">
+      <scroll-view 
+        scroll-y 
+        class="goods-list-scroll" 
+        refresher-enabled 
+        :refresher-triggered="isRefreshingGoods" 
+        refresher-default-style="black"
+        refresher-background="#FAF6EE"
+        @refresherrefresh="onRefreshGoods"
+        @refresherrestore="onRestoreGoods"
+        @refresherabort="onAbortGoods"
+      >
         <view v-if="goodsList.length === 0" class="empty-state">
           <text class="empty-icon">🥪</text>
           <text class="empty-text">当前分类暂无餐品</text>
@@ -350,7 +370,19 @@
     </view>
 
     <!-- TAB 3: 门店与硬件 -->
-    <view v-if="currentTab === 2" class="tab-content dashboard-module">
+    <scroll-view 
+      v-if="currentTab === 2" 
+      scroll-y 
+      class="tab-content dashboard-scroll" 
+      refresher-enabled 
+      :refresher-triggered="isRefreshingDashboard" 
+      refresher-default-style="black"
+      refresher-background="#FAF6EE"
+      @refresherrefresh="onRefreshDashboard"
+      @refresherrestore="onRestoreDashboard"
+      @refresherabort="onAbortDashboard"
+    >
+      <view class="dashboard-module">
       <!-- Performance Cards -->
       <view class="perf-section">
         <!-- 上层: 今日履约出餐 (后厨运营) -->
@@ -449,7 +481,8 @@
           </button>
         </view>
       </view>
-    </view>
+      </view>
+    </scroll-view>
 
     <!-- MODAL 1: 手输提货码核销弹窗 -->
     <view class="modal-mask" v-if="showManualVerifyModal" @tap="showManualVerifyModal = false">
@@ -944,7 +977,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
-import { onShow, onHide, onPullDownRefresh } from '@dcloudio/uni-app'
+import { onShow, onHide } from '@dcloudio/uni-app'
 import request, { fixImageUrl } from '../../utils/request'
 import api from '../../config/api'
 
@@ -956,6 +989,9 @@ const orderFilterType = ref(1) // 1: 待制作, 2: 待取餐, 4: 待退款, 3: �
 const fulfillmentScope = ref('today') // 'today': 今日出餐, 'tomorrow': 明日预订, 'all': 全部
 const orderList = ref([])
 const isRefreshing = ref(false)
+let isRefreshingOrders = false
+let orderRequestId = 0
+
 const orderCounts = reactive({
   making: 0,
   todayMaking: 0,
@@ -968,6 +1004,11 @@ const orderCounts = reactive({
 // Goods & Category State
 const goodsList = ref([])
 const isRefreshingGoods = ref(false)
+let isRefreshingGoodsActive = false
+
+// Dashboard State
+const isRefreshingDashboard = ref(false)
+let isRefreshingDashboardActive = false
 const selectedL1Id = ref(null) // null = 全部
 const selectedL2Id = ref(null) // null = 该一级类目下的全部
 const selectedCategoryId = ref(null)
@@ -1227,26 +1268,21 @@ onUnmounted(() => {
   stopOrderPolling()
 })
 
-onPullDownRefresh(async () => {
-  if (currentTab.value === 0) {
-    await loadOrders()
-  } else if (currentTab.value === 1) {
-    await loadGoods()
-    await loadCategories()
-  } else {
-    await loadDashboard()
-  }
-  uni.stopPullDownRefresh()
-})
-
 // Polling implementation (15s lightweight poll)
 function startOrderPolling() {
   stopOrderPolling()
   pollTimer = setInterval(async () => {
     try {
+      const params = {
+        showType: orderFilterType.value,
+        limit: 50
+      }
+      if (orderFilterType.value === 1) {
+        params.fulfillmentScope = fulfillmentScope.value
+      }
       const res = await request({
         url: api.AdminOrderList,
-        data: { showType: orderFilterType.value, limit: 10 },
+        data: params,
         hideErrorToast: true
       })
       if (res) {
@@ -1258,7 +1294,10 @@ function startOrderPolling() {
           uni.vibrateShort()
           uni.showToast({ title: '收到新订单！请及时制作', icon: 'none' })
         }
-        orderList.value = res.list || []
+        // 关键修复：仅在当前处于「订单流水」标签页时刷新列表，且携带当前正确的 fulfillmentScope（如明日预订），防止列表变空
+        if (currentTab.value === 0) {
+          orderList.value = res.list || []
+        }
       }
     } catch (e) {
       // Silent error during background poll
@@ -1287,7 +1326,7 @@ function switchMainTab(idx) {
 
 // ----------------- ORDER MODULE -----------------
 async function loadOrders() {
-  isRefreshing.value = true
+  const reqId = ++orderRequestId
   try {
     const params = {
       showType: orderFilterType.value,
@@ -1301,14 +1340,12 @@ async function loadOrders() {
       url: api.AdminOrderList,
       data: params
     })
-    if (res) {
+    if (reqId === orderRequestId && res) {
       orderList.value = res.list || []
       updateOrderCounts(res)
     }
   } catch (err) {
     console.error('加载订单失败', err)
-  } finally {
-    isRefreshing.value = false
   }
 }
 
@@ -1333,7 +1370,27 @@ function switchFulfillmentScope(scope) {
 }
 
 async function onRefreshOrders() {
-  await loadOrders()
+  if (isRefreshingOrders) return
+  isRefreshingOrders = true
+  isRefreshing.value = true
+  try {
+    await loadOrders()
+  } finally {
+    setTimeout(() => {
+      isRefreshing.value = false
+      isRefreshingOrders = false
+    }, 350)
+  }
+}
+
+function onRestoreOrders() {
+  isRefreshing.value = false
+  isRefreshingOrders = false
+}
+
+function onAbortOrders() {
+  isRefreshing.value = false
+  isRefreshingOrders = false
 }
 
 // Batch Mark Ready (一键出餐)
@@ -1707,7 +1764,6 @@ async function loadCategories() {
 }
 
 async function loadGoods() {
-  isRefreshingGoods.value = true
   try {
     const data = {
       page: 1,
@@ -1725,8 +1781,6 @@ async function loadGoods() {
     }
   } catch (e) {
     console.error('加载商品失败', e)
-  } finally {
-    isRefreshingGoods.value = false
   }
 }
 
@@ -1748,7 +1802,28 @@ function onSelectCategory(catId) {
 }
 
 async function onRefreshGoods() {
-  await loadGoods()
+  if (isRefreshingGoodsActive) return
+  isRefreshingGoodsActive = true
+  isRefreshingGoods.value = true
+  try {
+    await loadGoods()
+    await loadCategories()
+  } finally {
+    setTimeout(() => {
+      isRefreshingGoods.value = false
+      isRefreshingGoodsActive = false
+    }, 350)
+  }
+}
+
+function onRestoreGoods() {
+  isRefreshingGoods.value = false
+  isRefreshingGoodsActive = false
+}
+
+function onAbortGoods() {
+  isRefreshingGoods.value = false
+  isRefreshingGoodsActive = false
 }
 
 // Toggle Goods On/Off Sale
@@ -2212,6 +2287,30 @@ async function loadDashboard() {
   }
 }
 
+async function onRefreshDashboard() {
+  if (isRefreshingDashboardActive) return
+  isRefreshingDashboardActive = true
+  isRefreshingDashboard.value = true
+  try {
+    await loadDashboard()
+  } finally {
+    setTimeout(() => {
+      isRefreshingDashboard.value = false
+      isRefreshingDashboardActive = false
+    }, 350)
+  }
+}
+
+function onRestoreDashboard() {
+  isRefreshingDashboard.value = false
+  isRefreshingDashboardActive = false
+}
+
+function onAbortDashboard() {
+  isRefreshingDashboard.value = false
+  isRefreshingDashboardActive = false
+}
+
 async function onTestPrint() {
   isPrintingTest.value = true
   try {
@@ -2263,11 +2362,12 @@ function formatTime(str) {
 
 <style scoped>
 .workbench-container {
-  min-height: 100vh;
+  height: 100vh;
   background-color: #FAF6EE;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 /* Top Nav */
@@ -2321,8 +2421,7 @@ function formatTime(str) {
   background: #ffffff;
   display: flex;
   border-bottom: 2rpx solid #EFE4D6;
-  position: sticky;
-  top: 0;
+  flex-shrink: 0;
   z-index: 10;
 }
 
@@ -2371,8 +2470,11 @@ function formatTime(str) {
 /* Tab Content */
 .tab-content {
   flex: 1;
+  min-height: 0;
+  height: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 /* Sub Tabs for Orders */
@@ -2383,6 +2485,7 @@ function formatTime(str) {
   gap: 16rpx;
   overflow-x: auto;
   border-bottom: 1rpx solid #EAE0D3;
+  flex-shrink: 0;
 }
 
 .sub-tab-item {
@@ -2423,6 +2526,7 @@ function formatTime(str) {
   display: flex;
   gap: 14rpx;
   padding: 12rpx 20rpx 4rpx;
+  flex-shrink: 0;
 }
 
 .scope-chip {
@@ -2501,6 +2605,7 @@ function formatTime(str) {
   border-radius: 18rpx;
   border: 1rpx solid #EFE4D6;
   box-shadow: 0 2rpx 8rpx rgba(111, 78, 55, 0.04);
+  flex-shrink: 0;
 }
 
 .batch-bar-hint {
@@ -2539,8 +2644,9 @@ function formatTime(str) {
 /* Order List */
 .order-list-scroll {
   flex: 1;
-  height: calc(100vh - 220rpx);
-  padding: 20rpx;
+  min-height: 0;
+  height: 0;
+  padding: 20rpx 20rpx 40rpx 20rpx;
   box-sizing: border-box;
 }
 
@@ -2966,8 +3072,9 @@ function formatTime(str) {
 /* Goods List & Cards */
 .goods-list-scroll {
   flex: 1;
+  min-height: 0;
   height: 0;
-  padding: 20rpx;
+  padding: 20rpx 20rpx 40rpx 20rpx;
   box-sizing: border-box;
 }
 
@@ -3120,6 +3227,13 @@ function formatTime(str) {
 }
 
 /* TAB 3: DASHBOARD & HARDWARE */
+.dashboard-scroll {
+  flex: 1;
+  min-height: 0;
+  height: 0;
+  box-sizing: border-box;
+}
+
 .dashboard-module {
   padding: 24rpx;
   display: flex;

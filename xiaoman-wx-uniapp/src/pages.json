@@ -316,7 +316,7 @@
         "navigationBarTitleText": "工作台",
         "navigationBarBackgroundColor": "#6F4E37",
         "navigationBarTextStyle": "white",
-        "enablePullDownRefresh": true
+        "enablePullDownRefresh": false
       }
     }
   ],
