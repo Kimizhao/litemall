@@ -222,6 +222,7 @@ public class WxAdminOrderController {
         try {
             LitemallUser user = userService.findById(order.getUserId());
             String openid = (user != null) ? user.getWeixinOpenid() : null;
+            String itemDesc = buildItemDesc(order.getId());
             wxShippingService.uploadShippingInfo(
                     order.getOrderSn(),
                     order.getPayId(),
@@ -229,7 +230,7 @@ public class WxAdminOrderController {
                     4, // 用户自提
                     "到店自提",
                     order.getOrderSn(),
-                    "小满食光手作餐品已出餐，请凭提货码取餐",
+                    itemDesc,
                     order.getMobile() != null ? order.getMobile() : ""
             );
         } catch (Exception e) {
@@ -271,6 +272,7 @@ public class WxAdminOrderController {
                     try {
                         LitemallUser user = userService.findById(order.getUserId());
                         String openid = (user != null) ? user.getWeixinOpenid() : null;
+                        String itemDesc = buildItemDesc(order.getId());
                         wxShippingService.uploadShippingInfo(
                                 order.getOrderSn(),
                                 order.getPayId(),
@@ -278,7 +280,7 @@ public class WxAdminOrderController {
                                 4,
                                 "到店自提",
                                 order.getOrderSn(),
-                                "小满食光手作餐品已出餐，请凭提货码取餐",
+                                itemDesc,
                                 order.getMobile() != null ? order.getMobile() : ""
                         );
                     } catch (Exception e) {
@@ -502,5 +504,35 @@ public class WxAdminOrderController {
             }
             return ResponseUtil.ok("已拒绝退款申请");
         }
+    }
+
+    /**
+     * 构建商品简短描述 (包含真实餐品名与数量，最多120字)
+     */
+    private String buildItemDesc(Integer orderId) {
+        try {
+            List<LitemallOrderGoods> goodsList = orderGoodsService.queryByOid(orderId);
+            if (goodsList != null && !goodsList.isEmpty()) {
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < goodsList.size(); i++) {
+                    if (i > 0) {
+                        sb.append("; ");
+                    }
+                    LitemallOrderGoods g = goodsList.get(i);
+                    sb.append(g.getGoodsName());
+                    if (g.getNumber() != null && g.getNumber() > 0) {
+                        sb.append("x").append(g.getNumber());
+                    }
+                    if (sb.length() > 90) {
+                        sb.append(" 等");
+                        break;
+                    }
+                }
+                return sb.toString();
+            }
+        } catch (Exception e) {
+            logger.error("构建商品描述异常: " + e.getMessage(), e);
+        }
+        return "小满食光商品";
     }
 }

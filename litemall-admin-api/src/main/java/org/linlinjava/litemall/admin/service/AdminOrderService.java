@@ -365,7 +365,7 @@ public class AdminOrderService {
                     if (i > 0) sb.append("; ");
                     LitemallOrderGoods g = goodsList.get(i);
                     sb.append(g.getGoodsName());
-                    if (g.getNumber() != null && g.getNumber() > 1) {
+                    if (g.getNumber() != null && g.getNumber() > 0) {
                         sb.append("x").append(g.getNumber());
                     }
                     if (sb.length() > 90) {
